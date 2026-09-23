@@ -470,6 +470,8 @@ export default function Home() {
   const [quiz, setQuiz] = useState<QuizState>(emptyQuiz);
   const [languageSelected, setLanguageSelected] = useState(false);
   const [languageReturn, setLanguageReturn] = useState<Screen | null>(null);
+  const [bookletReturnId, setBookletReturnId] = useState<string | null>(null);
+  const pendingBookletSection = useRef<string | null>(null);
   const [storageReady, setStorageReady] = useState(false);
   const [justCompletedThemeId, setJustCompletedThemeId] = useState<ThemeId | null>(null);
   const completionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -522,6 +524,11 @@ export default function Home() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" });
+    if (screen === "booklet" && pendingBookletSection.current) {
+      const sectionId = pendingBookletSection.current;
+      pendingBookletSection.current = null;
+      window.requestAnimationFrame(() => document.getElementById(sectionId)?.scrollIntoView({ block: "start" }));
+    }
     const main = document.querySelector<HTMLElement>("main");
     if (main) { main.id = "main-content"; main.tabIndex = -1; main.focus({ preventScroll: true }); }
   }, [screen, activeThemeId]);
@@ -558,6 +565,11 @@ export default function Home() {
       : { ...current, inProgress: [...current.inProgress, id] });
     setActiveThemeId(id);
     setScreen("theme");
+  };
+
+  const openThemeFromBooklet = (id: ThemeId, returnToId: string) => {
+    setBookletReturnId(returnToId);
+    openTheme(id);
   };
 
   const startQuiz = () => {
@@ -618,8 +630,21 @@ export default function Home() {
       setScreen(languageReturn || "welcome");
       setLanguageReturn(null);
     } else if (screen === "portal") setScreen("languages");
-    else if (screen === "booklet" || screen === "themes") setScreen("portal");
-    else if (screen === "theme" || screen === "quiz" || screen === "recap") returnToThemes();
+    else if (screen === "booklet" || screen === "themes") {
+      if (screen === "themes" && bookletReturnId) {
+        pendingBookletSection.current = bookletReturnId;
+        setBookletReturnId(null);
+        setActiveThemeId(null);
+        setScreen("booklet");
+      } else setScreen("portal");
+    } else if (screen === "theme" || screen === "quiz" || screen === "recap") {
+      if (bookletReturnId) {
+        pendingBookletSection.current = bookletReturnId;
+        setBookletReturnId(null);
+        setActiveThemeId(null);
+        setScreen("booklet");
+      } else returnToThemes();
+    }
   };
 
   return (
@@ -638,7 +663,7 @@ export default function Home() {
         {screen === "welcome" && <Welcome onStart={() => { setLanguageReturn(null); setScreen("languages"); }} />}
         {screen === "languages" && <LanguageChoice onSelect={selectLanguage} />}
         {screen === "portal" && <Portal language={language} onBooklet={() => setScreen("booklet")} onTraining={() => setScreen("themes")} />}
-        {screen === "booklet" && <Booklet onTraining={() => setScreen("themes")} onTheme={openTheme} />}
+        {screen === "booklet" && <Booklet onTraining={() => { setBookletReturnId("idees"); setScreen("themes"); }} onTheme={openThemeFromBooklet} />}
         {screen === "themes" && <Themes progress={progress} onOpen={openTheme} onQuiz={startQuiz} />}
         {screen === "theme" && activeTheme && (
           <ThemeDetail

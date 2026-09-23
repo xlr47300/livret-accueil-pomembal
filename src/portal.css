@@ -81,13 +81,7 @@ main:focus { outline: none; }
 .arrival-address svg { flex-shrink: 0; }
 .arrival-address strong { display: block; font-size: 16px; }
 .arrival-address span { display: block; font-size: 13px; line-height: 1.6; margin-top: 5px; }
-.arrival-checklist { border: 1px solid #d5ddca; border-radius: 12px; padding: 24px; margin: 28px 0; background: white; }
-.checklist-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
-.checklist-heading h3 { margin: 0 0 18px; }
-.checklist-heading > span { font-size: 14px; color: #65754f; }
-.arrival-checklist label { display: flex; align-items: center; gap: 12px; padding: 11px 0; font-size: 14px; line-height: 1.5; cursor: pointer; }
-.arrival-checklist input { width: 20px; height: 20px; accent-color: var(--forest); flex-shrink: 0; }
-.arrival-checklist > p { font-size: 11px; margin: 18px 0 0; line-height: 1.5; color: #62705a; }
+.arrival-reminder { padding: 18px 22px; margin: 24px 0; background: white; border-inline-start: 4px solid #8eaa54; border-radius: 0 10px 10px 0; }
 .handbook-plan { background: white; padding: 20px; border-radius: 12px; border: 1px solid #dce0d4; }
 .handbook-plan button { display: flex; width: 100%; align-items: center; justify-content: center; flex-direction: column; gap: 15px; border: 0; background: transparent; color: var(--forest); cursor: zoom-in; }
 .handbook-plan img { max-height: 340px; max-width: 100%; object-fit: contain; }
@@ -96,7 +90,9 @@ main:focus { outline: none; }
 .handbook-contacts > div { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px 0; border-bottom: 1px solid #dce0d4; }
 .handbook-contacts dt { font-size: 14px; color: #65715e; line-height: 1.5; }
 .handbook-contacts dd { font-size: 16px; margin: 0; font-weight: 650; line-height: 1.5; }
-.handbook-contact-email { font-size: 13px !important; }
+.handbook-contact-email { margin-top: 28px; padding: 22px 24px; border-radius: 12px; background: #e9eddc; display: grid; justify-items: start; gap: 10px; }
+.handbook-contact-email h3 { margin: 0 0 4px; }
+.handbook-contact-email a,.idea-contact a { font-size: clamp(18px,2vw,22px); font-weight: 700; line-height: 1.5; overflow-wrap: anywhere; }
 .handbook a { color: inherit; text-underline-offset: 4px; }
 .handbook-hours { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 26px 0; }
 .handbook-hours > div { padding: 22px; border-radius: 12px; background: #e9eddc; }
@@ -125,6 +121,10 @@ main:focus { outline: none; }
 .handbook-team img { width: 100%; max-height: 420px; object-fit: cover; border-radius: 12px; }
 .handbook-ideas { background: #e4eccf; padding: 35px; margin: 40px 0; border: 0; border-radius: 18px; }
 .handbook-ideas > svg { margin-bottom: 22px; }
+.idea-contact { padding-top: 4px; }
+.idea-contact h3 { margin-bottom: 6px; }
+.idea-contact p { margin-top: 0; }
+.idea-contact a { display: block; width: fit-content; margin: 6px 0; }
 .handbook-next { display: flex; align-items: flex-start; gap: 24px; padding: 15px 0 45px; }
 .handbook-next > svg { flex-shrink: 0; }
 .handbook-next h2 { font-size: 31px; }
@@ -228,16 +228,10 @@ main:focus { outline: none; }
   .handbook h2 { font-size: 23pt; break-after: avoid; }
   .handbook h3 { break-after: avoid; }
   .handbook p,.handbook li { font-size: 10pt; }
-  .handbook figure,.handbook-hours,.arrival-checklist,.handbook-key-rule,.handbook-emergency,.handbook-contacts > div { break-inside: avoid; }
+  .handbook figure,.handbook-hours,.arrival-reminder,.handbook-key-rule,.handbook-emergency,.handbook-contacts > div { break-inside: avoid; }
   .handbook-plan img { max-height: 400px; }
   .handbook-plan button span { display: none; }
   .handbook-visual-row img { max-height: 200px; object-fit: contain; }
   .handbook-team img { max-height: 230px; object-fit: contain; }
   .handbook-ideas { margin: 20px 0; padding: 20px; }
-  .print-idea-only > :not(.idea-print-sheet) { display: none !important; }
-  .print-idea-only .idea-print-sheet { display: block; }
-  .idea-print-sheet h1 { font-size: 26pt; }
-  .idea-print-sheet h2 { font-size: 16pt; margin-top: 40px; }
-  .idea-print-sheet > div { height: 170px; border-bottom: 1px solid #888; }
-  .idea-print-sheet p { font-size: 12pt; }
 }
