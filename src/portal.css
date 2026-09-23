@@ -58,7 +58,7 @@ main:focus { outline: none; }
 .handbook-print { display: inline-flex; align-items: center; gap: 10px; border: 1px solid currentColor; color: inherit; background: transparent; border-radius: 100px; padding: 11px 17px; font-size: 12px; font-weight: 600; cursor: pointer; }
 .handbook-layout { max-width: 1140px; margin: 0 auto; display: grid; grid-template-columns: 215px minmax(0,1fr); gap: 64px; }
 .handbook-sidebar { position: sticky; top: 95px; align-self: start; padding-top: 35px; margin-bottom: 50px; }
-.handbook-sidebar > p { font-size: 10px; letter-spacing: .14em; color: #67725f; padding-left: 12px; }
+.handbook-sidebar > p { font-size: 10px; letter-spacing: .14em; color: #67725f; padding-inline-start: 12px; }
 .handbook-sidebar nav { display: grid; gap: 2px; }
 .handbook-sidebar nav a { text-decoration: none; padding: 10px 12px; border-radius: 7px; display: flex; gap: 12px; color: #53634f; font-size: 13px; }
 .handbook-sidebar nav a span { color: #788572; font-size: 11px; }
@@ -70,7 +70,7 @@ main:focus { outline: none; }
 .handbook h2 { font-size: clamp(30px,3.4vw,43px); font-weight: 550; line-height: 1.12; letter-spacing: -.045em; margin: 0 0 26px; }
 .handbook h3 { font-size: 20px; font-weight: 650; letter-spacing: -.02em; margin: 25px 0 12px; }
 .handbook p,.handbook li { font-size: 16px; line-height: 1.8; color: #4a5c4c; }
-.handbook ul { padding-left: 22px; }
+.handbook ul { padding-inline-start: 22px; }
 .handbook li { margin: 0 0 9px; }
 .handbook figure { margin: 0; }
 .handbook figcaption { font-size: 11px; color: #64745f; margin-top: 10px; line-height: 1.6; }
@@ -105,7 +105,7 @@ main:focus { outline: none; }
 .handbook-key-rule { margin: 28px 0; display: flex; align-items: center; gap: 28px; padding: 24px; background: #e4eccf; border-radius: 12px; }
 .handbook-key-rule > span { font-size: 37px; letter-spacing: -.05em; font-weight: 700; flex-shrink: 0; }
 .handbook-key-rule p { font-size: 14px; margin: 0; line-height: 1.6; }
-.handbook-training-link { display: inline-flex; align-items: center; gap: 10px; padding: 12px 0; border: 0; background: transparent; color: var(--forest); font-size: 13px; font-weight: 650; margin-right: 20px; cursor: pointer; text-align: start; }
+.handbook-training-link { display: inline-flex; align-items: center; gap: 10px; padding: 12px 0; border: 0; background: transparent; color: var(--forest); font-size: 13px; font-weight: 650; margin-inline-end: 20px; cursor: pointer; text-align: start; }
 .handbook-training-link:hover { text-decoration: underline; text-underline-offset: 4px; }
 .handbook-emergency { display: flex; align-items: flex-start; gap: 20px; padding: 26px; background: #faeae1; border-radius: 12px; margin-top: 28px; }
 .handbook-emergency > svg { flex-shrink: 0; color: #963f2f; margin-top: 5px; }
@@ -138,7 +138,8 @@ main:focus { outline: none; }
 .plan-dialog img { display: block; width: 100%; height: auto; }
 .plan-dialog p { font-size: 12px; }
 .plan-dialog a { display: block; padding-top: 15px; }
-.idea-print-sheet { display: none; }
+.handbook[dir="rtl"] .arrival-reminder { border-radius: 10px 0 0 10px; }
+.handbook[dir="rtl"] .plan-dialog { direction: rtl; }
 @media(max-width:1000px) {
   .welcome-path { gap: 30px; padding-block: 60px; grid-template-columns: 1fr; }
   .welcome-section-heading { max-width: 620px; }

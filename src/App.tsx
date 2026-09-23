@@ -145,7 +145,6 @@ const portalCopy: Record<LanguageCode, {
 
 function Portal({ language, onBooklet, onTraining }: { language: LanguageCode; onBooklet: () => void; onTraining: () => void }) {
   const labels = portalCopy[language];
-  const bookletAvailable = language === "FR";
   return (
     <main id="main-content" tabIndex={-1} className="page-shell portal-shell">
       <div className="section-heading portal-heading">
@@ -154,11 +153,11 @@ function Portal({ language, onBooklet, onTraining }: { language: LanguageCode; o
         <p>{labels.intro}</p>
       </div>
       <div className="portal-grid">
-        <button className={`portal-card booklet ${bookletAvailable ? "" : "disabled"}`} onClick={bookletAvailable ? onBooklet : undefined} disabled={!bookletAvailable}>
+        <button className="portal-card booklet" onClick={onBooklet}>
           <img className="module-photo" src="/images/site-pomembal.webp" alt="" />
           <span className="portal-card-icon"><BookOpen /></span>
           <span className="portal-card-copy"><strong>{labels.booklet}</strong><small>{labels.bookletText}</small></span>
-          <span className="portal-card-action">{bookletAvailable ? labels.open : labels.soon}{bookletAvailable && <ChevronRight />}</span>
+          <span className="portal-card-action">{labels.open}<ChevronRight /></span>
         </button>
         <button className="portal-card training" onClick={onTraining}>
           <img className="module-photo" src="/images/hero-station.webp" alt="" />
@@ -514,9 +513,10 @@ export default function Home() {
   useEffect(() => {
     document.documentElement.lang = language.toLowerCase();
     document.documentElement.dir = content.direction;
-    document.title = screen === "themes" || screen === "theme" || screen === "quiz" || screen === "recap"
-      ? `${copy.welcome.title} Pomembal`
-      : "Accueil et formations Pomembal";
+    document.title = screen === "booklet" ? `${portalCopy[language].booklet} · Pomembal`
+      : screen === "themes" || screen === "theme" || screen === "quiz" || screen === "recap"
+        ? `${copy.welcome.title} Pomembal`
+        : "Accueil et formations Pomembal";
     document.querySelector('meta[name="description"]')?.setAttribute("content", screen === "booklet"
       ? "Livret d’accueil des nouveaux salariés Pomembal."
       : "Portail d’accueil, d’information et de formation des équipes Pomembal.");
@@ -545,9 +545,7 @@ export default function Home() {
     setLanguage(code);
     setLanguageSelected(true);
     try { window.localStorage.setItem(STORAGE_LANGUAGE, code); } catch { /* stockage facultatif */ }
-    const destination = languageReturn === "booklet" && code !== "FR"
-      ? "portal"
-      : languageReturn && languageReturn !== "languages" ? languageReturn : "portal";
+    const destination = languageReturn && languageReturn !== "languages" ? languageReturn : "portal";
     setScreen(destination);
     setLanguageReturn(null);
   };
@@ -663,7 +661,7 @@ export default function Home() {
         {screen === "welcome" && <Welcome onStart={() => { setLanguageReturn(null); setScreen("languages"); }} />}
         {screen === "languages" && <LanguageChoice onSelect={selectLanguage} />}
         {screen === "portal" && <Portal language={language} onBooklet={() => setScreen("booklet")} onTraining={() => setScreen("themes")} />}
-        {screen === "booklet" && <Booklet onTraining={() => { setBookletReturnId("idees"); setScreen("themes"); }} onTheme={openThemeFromBooklet} />}
+        {screen === "booklet" && <Booklet language={language} onTraining={() => { setBookletReturnId("idees"); setScreen("themes"); }} onTheme={openThemeFromBooklet} />}
         {screen === "themes" && <Themes progress={progress} onOpen={openTheme} onQuiz={startQuiz} />}
         {screen === "theme" && activeTheme && (
           <ThemeDetail

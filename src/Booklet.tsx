@@ -1,45 +1,128 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ChevronUp, Expand, GraduationCap, Lightbulb, MapPin, Phone, Printer, X } from "lucide-react";
-import type { ThemeId } from "./content";
+import { bookletText } from "./content/booklet";
+import type { LanguageCode, ThemeId } from "./content";
 
-const chapters = [
-  ["bienvenue", "Bienvenue"], ["arrivee", "Votre arrivée"], ["contacts", "Vos contacts"],
-  ["horaires", "Horaires & pauses"], ["tenue", "Tenue & hygiène"], ["securite", "Sécurité"],
-  ["emballage", "À l’emballage"], ["environnement", "Environnement"], ["collectif", "Vie d’équipe"], ["idees", "Boîte à idées"],
-];
-const contacts = [
-  ["Direction", "Vincent et Sandrine Carrère-Loustaunau"],
-  ["Responsable de station et sécurité", "Dina"], ["Responsable verger", "Romain"],
-  ["Comptabilité", "Laetitia"], ["Sauveteur secouriste du travail", "Dina"],
-  ["Responsable qualité et emballage", "Xavier"],
-];
-export default function Booklet({ onTraining, onTheme }: { onTraining: () => void; onTheme: (id: ThemeId, returnToId: string) => void }) {
-  const [active, setActive] = useState("bienvenue");
+const chapterIds = ["bienvenue", "arrivee", "contacts", "horaires", "tenue", "securite", "emballage", "environnement", "collectif", "idees"];
+const contactNames = ["Vincent et Sandrine Carrère-Loustaunau", "Dina", "Romain", "Laetitia", "Dina", "Xavier"];
+const directionEmails = ["tradipom@gmail.com", "sandrine.tradipom@gmail.com"];
+
+type Props = { language: LanguageCode; onTraining: () => void; onTheme: (id: ThemeId, returnToId: string) => void };
+
+export default function Booklet({ language, onTraining, onTheme }: Props) {
+  const t = bookletText[language];
+  const [active, setActive] = useState(chapterIds[0]);
   const dialog = useRef<HTMLDialogElement>(null);
   const planButton = useRef<HTMLButtonElement>(null);
+  const sectionLabel = (index: number) => <span className="chapter-number">{String(index + 1).padStart(2, "0")} — {t.sectionLabels[index]}</span>;
+  const rules = (items: string[]) => <ul>{items.map(item => <li key={item}>{item}</li>)}</ul>;
+  const trainingLink = (id: ThemeId, label: string, returnToId: string) => (
+    <button className="handbook-training-link" onClick={() => onTheme(id, returnToId)}>
+      <GraduationCap size={18} />{label}<ArrowRight size={17} aria-hidden="true" />
+    </button>
+  );
+
   useEffect(() => {
-    const observer = new IntersectionObserver(entries => { const visible = entries.filter(e => e.isIntersecting).sort((a,b) => a.boundingClientRect.top - b.boundingClientRect.top); if (visible[0]) setActive(visible[0].target.id); }, { rootMargin: "-90px 0px -55% 0px" });
-    document.querySelectorAll(".handbook-section").forEach(el => observer.observe(el));
+    const observer = new IntersectionObserver(entries => {
+      const visible = entries.filter(entry => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+      if (visible[0]) setActive(visible[0].target.id);
+    }, { rootMargin: "-90px 0px -55% 0px" });
+    document.querySelectorAll(".handbook-section").forEach(element => observer.observe(element));
     return () => observer.disconnect();
   }, []);
-  const trainingLink = (id: ThemeId, label: string, returnToId: string) => <button className="handbook-training-link" onClick={() => onTheme(id, returnToId)}><GraduationCap size={18} />{label}<ArrowRight size={17} /></button>;
-  return <main id="main-content" tabIndex={-1} className="handbook" lang="fr" dir="ltr">
-    <header className="handbook-cover"><img src="/images/site-pomembal.webp" alt="Le site Pomembal et les vergers" /><div><p className="welcome-overline">POMEMBAL · VOTRE LIVRET D’ACCUEIL</p><h1>Bienvenue<br />dans l’équipe.</h1><p>Les personnes, les lieux et les gestes qui vous accompagnent dès le premier jour.</p><button className="handbook-print" onClick={() => window.print()}><Printer size={17} /> Imprimer le livret</button></div></header>
-    <div className="handbook-layout"><aside className="handbook-sidebar"><p>VOS REPÈRES</p><nav aria-label="Sommaire du livret">{chapters.map(([id,label],i) => <a href={`#${id}`} key={id} aria-current={active === id ? "location" : undefined}><span>{String(i+1).padStart(2,"0")}</span>{label}</a>)}</nav><a className="handbook-help" href="tel:112"><Phone size={18} /><span>Urgence<strong>112</strong></span></a></aside>
-    <div className="handbook-body">
-      <section className="handbook-section" id="bienvenue"><span className="chapter-number">01 — NOTRE ENTREPRISE</span><h2>La qualité commence<br />avec chacun de nous.</h2><div className="handbook-editorial"><div><p>Pomembal conditionne des pommes destinées à des clients en France et à l’étranger. Du verger à l’emballage, le soin apporté au fruit guide notre travail.</p><p>Respect des personnes, qualité des produits et attention à l’environnement font partie de nos engagements. Votre arrivée est l’occasion de découvrir nos métiers et de prendre vos repères avec l’équipe.</p><p><strong>Une question ? Demandez à votre responsable.</strong> Vous êtes accompagné dans la découverte de votre poste.</p></div><figure><img src="/images/verger-pomembal.webp" alt="Photographie au verger issue du livret d’accueil" loading="lazy" /><figcaption>Du verger à la station.</figcaption></figure></div></section>
-      <section className="handbook-section" id="arrivee"><span className="chapter-number">02 — VOTRE PREMIER JOUR</span><h2>Prendre vos repères.</h2><div className="arrival-address"><MapPin size={24} /><div><strong>1270–1274 route de Lalandette</strong><span>47300 Bias · Un espace est réservé au stationnement.</span></div></div><p>À votre arrivée, présentez-vous au responsable indiqué. Faites-vous montrer votre poste, les vestiaires, la salle de pause, les cheminements et le point de rassemblement.</p><p className="arrival-reminder"><strong>Avant de commencer :</strong> identifiez votre responsable, vos horaires et votre poste, les vestiaires, la tenue demandée et les consignes d’urgence.</p><figure className="handbook-plan"><button ref={planButton} onClick={() => dialog.current?.showModal()} aria-label="Agrandir le plan de la station"><img src="/images/plan-station.webp" alt="Plan de la station : SAS d’entrée, bureaux, chambres froides, réfectoire et sanitaires" loading="lazy" /><span><Expand size={17} /> Agrandir le plan</span></button><figcaption>Plan présent dans le livret d’origine — DOC 24, V1 du 15/11/2023. Suivez les affichages et les consignes sur place.</figcaption></figure></section>
-      <section className="handbook-section" id="contacts"><span className="chapter-number">03 — LES PERSONNES À CONNAÎTRE</span><h2>Qui peut vous aider ?</h2><dl className="handbook-contacts">{contacts.map(([role,name]) => <div key={role}><dt>{role}</dt><dd>{name}</dd></div>)}</dl><div className="handbook-contact-email"><h3>Contacter la direction</h3><a href="mailto:tradipom@gmail.com">tradipom@gmail.com</a><a href="mailto:sandrine.tradipom@gmail.com">sandrine.tradipom@gmail.com</a></div></section>
-      <section className="handbook-section" id="horaires"><span className="chapter-number">04 — ORGANISER SA JOURNÉE</span><h2>Horaires et pauses.</h2><p>Les plages ci-dessous sont les <strong>amplitudes maximales possibles</strong>. Elles ne représentent pas un horaire de travail systématique : suivez le planning communiqué par l’encadrement.</p><div className="handbook-hours"><div><span>Lundi au vendredi</span><strong>7 h 50 – 12 h</strong><strong>13 h – 18 h</strong></div><div><span>Samedi</span><strong>7 h 50 – 12 h</strong></div></div><h3>En salle de repos</h3><ul><li>Retirez votre blouse avant d’entrer.</li><li>Nettoyez votre place et les équipements après utilisation.</li><li>Remettez votre blouse et lavez-vous les mains avant la reprise.</li></ul><p>Des pommes sont à votre disposition pendant les pauses. Vos retours sur leur goût, leur texture et leur qualité sont les bienvenus.</p></section>
-      <section className="handbook-section" id="tenue"><span className="chapter-number">05 — HYGIÈNE AU QUOTIDIEN</span><h2>Une tenue propre.<br />Les bons gestes.</h2><div className="handbook-visual-row"><img src="/images/tenue.webp" alt="Tenue de travail propre avec cheveux couverts" loading="lazy" /><div><ul><li>Blouse propre, complète et fermée.</li><li>Cheveux entièrement couverts par une charlotte.</li><li>Chaussures propres, fermées et adaptées au poste.</li><li>Ongles courts, sans vernis ni faux ongles.</li><li>Aucun bijou, sauf une alliance simple ; aucune montre ni bracelet.</li><li>Pas de piercing apparent. Évitez maquillage excessif et parfums trop marqués.</li><li>Téléphone et effets personnels rangés dans l’espace prévu.</li></ul></div></div><div className="handbook-key-rule"><span>60 °C</span><p><strong>Blouse lavée au minimum une fois par semaine.</strong><br />Lavez-la plus rapidement si elle est sale ou souillée.</p></div><h3>Le lavage des mains</h3><p>Lavez-vous les mains à l’entrée en production, à chaque reprise et avant tout contact avec les fruits. Renouvelez le lavage après les toilettes, un mouchage ou un contact avec des déchets.</p>{trainingLink("entree", "Revoir les règles de tenue", "tenue")}{trainingLink("mains", "Apprendre le lavage des mains", "tenue")}</section>
-      <section className="handbook-section" id="securite"><span className="chapter-number">06 — SE PROTÉGER ET PROTÉGER LES AUTRES</span><h2>La sécurité au poste.</h2><div className="handbook-visual-row"><img src="/images/circulation.webp" alt="Illustration des règles de circulation dans la station" loading="lazy" /><div><ul><li>Respectez les cheminements piétons et les marquages au sol.</li><li>Ne traversez jamais la trajectoire d’un engin.</li><li>Ne retirez aucune protection de machine.</li><li>En cas de blocage, arrêtez votre action et prévenez un responsable.</li><li>Signalez immédiatement un incident ou une situation dangereuse.</li></ul></div></div><div className="handbook-emergency"><Phone size={26} /><div><h3>En cas d’urgence</h3><p>Alertez le responsable ou Dina, sauveteur secouriste du travail. Pour joindre les secours : <a href="tel:112">112</a>.</p><p>À l’alarme, évacuez immédiatement, sans récupérer vos affaires, vers le <strong>point de rassemblement au parking visiteurs</strong>.</p></div></div>{trainingLink("securite", "Revoir la sécurité en station", "securite")}{trainingLink("urgence", "Connaître les gestes d’alerte", "securite")}</section>
-      <section className="handbook-section" id="emballage"><span className="chapter-number">07 — LE SOIN APPORTÉ AU FRUIT</span><h2>À l’emballage,<br />chaque geste compte.</h2><ul><li>Manipulez les fruits avec soin et respectez les consignes de tri.</li><li>Utilisez uniquement le matériel fourni par Pomembal.</li><li>Ne remettez jamais dans le circuit un fruit tombé au sol.</li><li>Signalez un emballage sale, un objet perdu ou cassé, du verre, du plastique dur ou un corps étranger.</li><li>Prévenez le responsable en cas d’erreur d’étiquette, de variété, de calibre ou d’emballage.</li></ul><p className="handbook-motto">Je vois. J’agis si je peux le faire sans danger. J’alerte.</p>{trainingLink("fruits", "Revoir les bons gestes avec les fruits", "emballage")}</section>
-      <section className="handbook-section" id="environnement"><span className="chapter-number">08 — PRÉSERVER NOS RESSOURCES</span><h2>Les gestes utiles,<br />tous les jours.</h2><div className="eco-grid"><div><span>01</span><h3>Trier</h3><p>Séparez cartons, déchets organiques et autres déchets selon les consignes de la station.</p></div><div><span>02</span><h3>Économiser</h3><p>Éteignez les lumières inutilisées et fermez les robinets après usage.</p></div><div><span>03</span><h3>Signaler</h3><p>Prévenez le responsable si vous constatez un gaspillage, une fuite ou un dysfonctionnement.</p></div></div></section>
-      <section className="handbook-section" id="collectif"><span className="chapter-number">09 — BIEN VIVRE ENSEMBLE</span><h2>Une place dans l’équipe.</h2><figure className="handbook-team"><img src="/images/equipe-pomembal.webp" alt="L’équipe réunie, photo du livret d’accueil" loading="lazy" /><figcaption>Un moment partagé par l’équipe Pomembal.</figcaption></figure><p>Respect, éthique et égalité professionnelle font partie de la vie dans l’entreprise. Les moments conviviaux et les événements internes sont aussi l’occasion de mieux se connaître.</p><h3>Vos droits et vos devoirs</h3><p>Le livret rappelle les congés payés, la formation et l’égalité professionnelle. Pour connaître les modalités qui s’appliquent à votre situation, adressez-vous à l’encadrement.</p><p>Respectez les consignes internes, vos collègues et la confidentialité des informations de l’entreprise. Si vous rencontrez une difficulté, parlez-en à votre responsable.</p></section>
-      <section className="handbook-section handbook-ideas" id="idees"><Lightbulb size={35} /><span className="chapter-number">10 — VOTRE AVIS COMPTE</span><h2>Une idée peut<br />faire avancer les choses.</h2><p>Dans la salle de pause, la <strong>boîte à idées</strong> vous permet de proposer une amélioration ou de signaler une difficulté, <strong>de manière anonyme</strong>.</p><p>Organisation, sécurité, qualité, environnement ou vie d’équipe : chaque suggestion peut améliorer notre quotidien. Écrivez simplement votre idée sur une feuille, sans indiquer votre nom, puis déposez-la dans la boîte.</p><div className="idea-contact"><h3>Vous préférez écrire ?</h3><p>Vous pouvez envoyer un courriel à la direction. <strong>Attention : un courriel n’est pas anonyme.</strong></p><a href="mailto:tradipom@gmail.com?subject=Suggestion%20pour%20Pomembal">tradipom@gmail.com</a><a href="mailto:sandrine.tradipom@gmail.com?subject=Suggestion%20pour%20Pomembal">sandrine.tradipom@gmail.com</a></div><p>Pour une situation urgente ou dangereuse, alertez immédiatement un responsable.</p></section>
-      <section className="handbook-next"><GraduationCap size={32} /><div><span className="chapter-number">LA SUITE DE VOTRE PARCOURS</span><h2>Place aux bons réflexes.</h2><p>Retrouvez les huit thèmes de la formation Hygiène et Sécurité, puis testez vos connaissances avec le quiz.</p><button className="primary-button" onClick={onTraining}>Ouvrir la formation <ArrowRight size={19} /></button></div></section>
-      <a href="#main-content" className="handbook-top"><ChevronUp size={17} /> Haut du livret</a>
-    </div></div>
-    <dialog className="plan-dialog" ref={dialog} onClose={() => planButton.current?.focus()} onClick={e => { if(e.target === e.currentTarget) dialog.current?.close(); }} aria-labelledby="plan-title"><div><h2 id="plan-title">Plan de la station</h2><button onClick={() => dialog.current?.close()} aria-label="Fermer le plan"><X /></button></div><p>DOC 24 · V1 du 15/11/2023 — plan du livret d’origine</p><img src="/images/plan-station.webp" alt="Plan de la station en grand format" /><a href="/images/plan-station.webp" target="_blank" rel="noreferrer">Ouvrir l’image dans un nouvel onglet</a></dialog>
-  </main>;
+
+  return (
+    <main id="main-content" tabIndex={-1} className="handbook" lang={language.toLowerCase()} dir={language === "AR" ? "rtl" : "ltr"}>
+      <header className="handbook-cover">
+        <img src="/images/site-pomembal.webp" alt="" />
+        <div><p className="welcome-overline">{t.cover[0]}</p><h1>{t.cover[1]}</h1><p>{t.cover[2]}</p>
+          <button className="handbook-print" onClick={() => window.print()}><Printer size={17} />{t.cover[3]}</button></div>
+      </header>
+      <div className="handbook-layout">
+        <aside className="handbook-sidebar">
+          <p>{t.nav[0]}</p>
+          <nav aria-label={t.nav[1]}>{chapterIds.map((id, index) => (
+            <a href={`#${id}`} key={id} aria-current={active === id ? "location" : undefined}>
+              <span>{String(index + 1).padStart(2, "0")}</span>{t.chapters[index]}
+            </a>
+          ))}</nav>
+          <a className="handbook-help" href="tel:112"><Phone size={18} /><span>{t.nav[2]}<strong dir="ltr">112</strong></span></a>
+        </aside>
+        <div className="handbook-body">
+          <section className="handbook-section" id="bienvenue">
+            {sectionLabel(0)}<h2>{t.welcome.title}</h2>
+            <div className="handbook-editorial"><div>{t.welcome.paragraphs.map(text => <p key={text}>{text}</p>)}</div>
+              <figure><img src="/images/verger-pomembal.webp" alt={t.welcome.alt} loading="lazy" /><figcaption>{t.welcome.picture}</figcaption></figure></div>
+          </section>
+          <section className="handbook-section" id="arrivee">
+            {sectionLabel(1)}<h2>{t.arrival.title}</h2>
+            <div className="arrival-address"><MapPin size={24} /><div><strong dir="ltr">1270–1274 route de Lalandette</strong><span>{t.arrival.parking}</span></div></div>
+            <p>{t.arrival.intro}</p><p className="arrival-reminder"><strong>{t.arrival.reminderLabel}</strong> {t.arrival.reminder}</p>
+            <figure className="handbook-plan"><button ref={planButton} onClick={() => dialog.current?.showModal()} aria-label={t.arrival.planButton}>
+              <img src="/images/plan-station.webp" alt={t.arrival.planAlt} loading="lazy" /><span><Expand size={17} />{t.arrival.planButton}</span>
+            </button><figcaption>{t.arrival.planCaption}</figcaption></figure>
+          </section>
+          <section className="handbook-section" id="contacts">
+            {sectionLabel(2)}<h2>{t.contacts.title}</h2>
+            <dl className="handbook-contacts">{t.contacts.roles.map((role, index) => (
+              <div key={index}><dt>{role}</dt><dd><bdi>{contactNames[index]}</bdi></dd></div>
+            ))}</dl>
+            <div className="handbook-contact-email"><h3>{t.contacts.emailTitle}</h3>{directionEmails.map(email => (
+              <a key={email} href={`mailto:${email}`} dir="ltr">{email}</a>
+            ))}</div>
+          </section>
+          <section className="handbook-section" id="horaires">
+            {sectionLabel(3)}<h2>{t.hours.title}</h2><p>{t.hours.limits}</p>
+            <div className="handbook-hours"><div><span>{t.hours.weekdays}</span><strong dir="ltr">7 h 50 – 12 h</strong><strong dir="ltr">13 h – 18 h</strong></div>
+              <div><span>{t.hours.saturday}</span><strong dir="ltr">7 h 50 – 12 h</strong></div></div>
+            <h3>{t.hours.breakTitle}</h3>{rules(t.hours.rules)}<p>{t.hours.apples}</p>
+          </section>
+          <section className="handbook-section" id="tenue">
+            {sectionLabel(4)}<h2>{t.hygiene.title}</h2>
+            <div className="handbook-visual-row"><img src="/images/tenue.webp" alt={t.hygiene.imageAlt} loading="lazy" /><div>{rules(t.hygiene.rules)}</div></div>
+            <div className="handbook-key-rule"><span dir="ltr">60 °C</span><p><strong>{t.hygiene.washLead}</strong><br />{t.hygiene.washSoon}</p></div>
+            <h3>{t.hygiene.handsTitle}</h3><p>{t.hygiene.hands}</p>
+            {trainingLink("entree", t.hygiene.linkClothes, "tenue")}{trainingLink("mains", t.hygiene.linkHands, "tenue")}
+          </section>
+          <section className="handbook-section" id="securite">
+            {sectionLabel(5)}<h2>{t.safety.title}</h2>
+            <div className="handbook-visual-row"><img src="/images/circulation.webp" alt={t.safety.imageAlt} loading="lazy" /><div>{rules(t.safety.rules)}</div></div>
+            <div className="handbook-emergency"><Phone size={26} /><div><h3>{t.safety.emergencyTitle}</h3>
+              <p>{t.safety.alert} <a href="tel:112" dir="ltr">112</a>.</p><p>{t.safety.evacuation}</p></div></div>
+            {trainingLink("securite", t.safety.linkSafety, "securite")}{trainingLink("urgence", t.safety.linkEmergency, "securite")}
+          </section>
+          <section className="handbook-section" id="emballage">
+            {sectionLabel(6)}<h2>{t.packing.title}</h2>{rules(t.packing.rules)}
+            <p className="handbook-motto">{t.packing.motto}</p>{trainingLink("fruits", t.packing.link, "emballage")}
+          </section>
+          <section className="handbook-section" id="environnement">
+            {sectionLabel(7)}<h2>{t.environment.title}</h2><div className="eco-grid">{t.environment.items.map((item, index) => (
+              <div key={index}><span>{String(index + 1).padStart(2, "0")}</span><h3>{item.title}</h3><p>{item.text}</p></div>
+            ))}</div>
+          </section>
+          <section className="handbook-section" id="collectif">
+            {sectionLabel(8)}<h2>{t.team.title}</h2>
+            <figure className="handbook-team"><img src="/images/equipe-pomembal.webp" alt={t.team.imageAlt} loading="lazy" /><figcaption>{t.team.picture}</figcaption></figure>
+            <p>{t.team.intro}</p><h3>{t.team.rightsTitle}</h3><p>{t.team.rights}</p><p>{t.team.duties}</p>
+          </section>
+          <section className="handbook-section handbook-ideas" id="idees">
+            <Lightbulb size={35} />{sectionLabel(9)}<h2>{t.ideas.title}</h2><p>{t.ideas.anonymous}</p><p>{t.ideas.paper}</p>
+            <div className="idea-contact"><h3>{t.ideas.emailTitle}</h3><p>{t.ideas.email} <strong>{t.ideas.emailWarning}</strong></p>
+              {directionEmails.map(email => <a key={email} dir="ltr" href={`mailto:${email}?subject=${encodeURIComponent(t.ideas.emailSubject)}`}>{email}</a>)}</div>
+            <p>{t.ideas.urgent}</p>
+          </section>
+          <section className="handbook-next"><GraduationCap size={32} /><div><span className="chapter-number">{t.next.label}</span>
+            <h2>{t.next.title}</h2><p>{t.next.intro}</p>
+            <button className="primary-button" onClick={onTraining}>{t.next.button}<ArrowRight size={19} aria-hidden="true" /></button></div></section>
+          <a href="#main-content" className="handbook-top"><ChevronUp size={17} />{t.nav[3]}</a>
+        </div>
+      </div>
+      <dialog className="plan-dialog" ref={dialog} onClose={() => planButton.current?.focus()}
+        onClick={event => { if (event.target === event.currentTarget) dialog.current?.close(); }} aria-labelledby="plan-title">
+        <div><h2 id="plan-title">{t.arrival.planTitle}</h2><button onClick={() => dialog.current?.close()} aria-label={t.arrival.planClose}><X /></button></div>
+        <p>{t.arrival.planVersion}</p><img src="/images/plan-station.webp" alt={t.arrival.planAlt} />
+        <a href="/images/plan-station.webp" target="_blank" rel="noreferrer">{t.arrival.planOpen}</a>
+      </dialog>
+    </main>
+  );
 }
