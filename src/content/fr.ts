@@ -1,0 +1,465 @@
+import type { LocaleContent } from "./types";
+
+export const frCopy = {
+  header: { back: "Retour", language: "Changer de langue", progress: "Progression globale" },
+  welcome: {
+    kicker: "Formation essentielle",
+    title: "Hygiène & Sécurité",
+    subtitle: "Les bons réflexes pour protéger les fruits, les collègues et les consommateurs.",
+    duration: "Environ 10 à 15 minutes",
+    start: "Commencer",
+  },
+  languages: {
+    kicker: "Bienvenue",
+    title: "Choisissez votre langue",
+    intro: "Sélectionnez la langue utilisée pour votre parcours.",
+    available: "Disponible",
+    soon: "Bientôt disponible",
+    note: "Les autres langues seront proposées prochainement.",
+  },
+  themes: {
+    kicker: "Parcours essentiel",
+    title: "Les 8 thèmes",
+    intro: "Avancez à votre rythme. Vous pouvez reprendre un thème ou revoir une règle à tout moment.",
+    notStarted: "Non commencé",
+    inProgress: "En cours · Reprendre",
+    completed: "Terminé · Revoir",
+    coming: "À venir",
+    quizTitle: "Quiz des bons réflexes",
+    quizMeta: "8 questions · correction immédiate",
+    quizButton: "Tester mes réflexes",
+  },
+  theme: {
+    kicker: "Règle essentielle",
+    understood: "J’ai compris",
+    backToThemes: "Retour aux 8 thèmes",
+    completed: "Thème compris",
+    next: "Continuer vers le thème suivant",
+    quiz: "Passer au quiz final",
+  },
+  quiz: {
+    question: "Question",
+    choose: "Choisissez la bonne réponse",
+    correct: "Bonne réponse",
+    incorrect: "Pas tout à fait",
+    next: "Question suivante",
+    finish: "Voir le récapitulatif",
+  },
+  recap: {
+    kicker: "Parcours terminé",
+    title: "Les bons réflexes sont acquis.",
+    subtitle: "Gardez ces règles simples en tête à chaque prise de poste.",
+    remember: "À retenir",
+    reflexes: "Les 8 réflexes essentiels",
+    motto: "JE VOIS.\nJ’AGIS.\nJ’ALERTE.",
+    doubt: "Un doute ? N’improvisez pas.",
+    ask: "Demandez au responsable.",
+    review: "Revoir les règles",
+    themes: "Retour aux 8 thèmes",
+  },
+};
+
+export const fr: LocaleContent = {
+  code: "FR",
+  direction: "ltr",
+  themes: [
+    {
+      id: "entree",
+      number: "01",
+      title: "Avant d’entrer",
+      description: "Être propre, équipé et prêt.",
+      color: "green",
+      available: true,
+      image: "/images/tenue.png",
+      imageAlt: "Salariée en blouse propre avec les cheveux couverts",
+      sections: [
+        {
+          eyebrow: "Votre tenue",
+          title: "Propre. Complète. Fermée.",
+          items: [
+            "Blouse propre, complète, fermée et adaptée",
+            "Cheveux entièrement couverts",
+            "Chaussures propres, fermées et appropriées",
+          ],
+        },
+        {
+          eyebrow: "Mains sans pièges",
+          title: "Retirez ce qui peut contaminer",
+          items: [
+            "Ongles courts, propres et naturels",
+            "Pas de vernis ni de faux ongles",
+            "Aucun bijou, sauf alliance simple",
+            "Montres et bracelets interdits",
+          ],
+        },
+        {
+          eyebrow: "Effets personnels",
+          title: "Rangez votre téléphone",
+          statement: "Aucun téléphone dans la station ou l’atelier.",
+          tone: "navy",
+        },
+        {
+          eyebrow: "Votre blouse",
+          title: "Retirez-la hors production",
+          items: [
+            "Toilettes, pause et zone fumeurs : blouse retirée",
+            "Remettez-la avant le retour en production",
+            "Lavage à 60 °C minimum, au moins une fois par semaine",
+          ],
+        },
+      ],
+    },
+    {
+      id: "mains",
+      number: "02",
+      title: "Mains propres",
+      description: "Le bon lavage, au bon moment.",
+      color: "teal",
+      available: true,
+      image: "/images/lavage-mains.png",
+      imageAlt: "Salariée se lavant les mains au lave-mains de la station",
+      sections: [
+        {
+          eyebrow: "Avant",
+          title: "Lavez-vous les mains",
+          items: ["À l’arrivée en production", "À chaque reprise du travail", "Avant tout contact avec les fruits"],
+        },
+        {
+          eyebrow: "Après",
+          title: "Recommencez le lavage",
+          items: [
+            "Toilettes, repas ou cigarette",
+            "Mouchage ou contact avec les déchets",
+            "Surface sale ou action contaminante",
+          ],
+        },
+        {
+          eyebrow: "Comment ?",
+          title: "Suivez la procédure affichée",
+          items: [
+            "Respectez toutes les étapes du lave-mains",
+            "Séchez avec l’essuie-mains à usage unique",
+            "Pas de désinfection systématique",
+          ],
+        },
+        {
+          eyebrow: "Gants",
+          title: "Pas de port systématique",
+          items: [
+            "Gants Pomembal uniquement",
+            "Aucun gant personnel",
+            "Les gants ne remplacent jamais le lavage des mains",
+          ],
+          tone: "navy",
+        },
+      ],
+    },
+    {
+      id: "sante",
+      number: "03",
+      title: "Santé & blessures",
+      description: "Prévenir avant de contaminer.",
+      color: "red",
+      available: true,
+      sections: [
+        {
+          eyebrow: "Blessure",
+          title: "Prévenez immédiatement",
+          items: [
+            "Utilisez un pansement bleu détectable",
+            "Un gant n’est pas automatiquement obligatoire à cause du pansement",
+          ],
+          tone: "warning",
+        },
+        {
+          eyebrow: "Symptômes",
+          title: "Signalez avant tout contact",
+          items: [
+            "Maladie contagieuse ou fièvre",
+            "Diarrhée ou vomissements",
+            "Plaie infectée ou écoulement inhabituel",
+          ],
+        },
+        {
+          eyebrow: "Médicaments",
+          title: "Salle de pause uniquement",
+          statement: "Aucun médicament dans la station ou l’atelier.",
+          tone: "navy",
+        },
+        {
+          eyebrow: "Accident ou malaise",
+          title: "Alertez sans attendre",
+          statement: "Prévenez la chef de file, sa suppléante SST ou un responsable.",
+        },
+      ],
+    },
+    {
+      id: "allergenes",
+      number: "04",
+      title: "Repas & allergènes",
+      description: "Rien à manger ni à boire en production.",
+      color: "orange",
+      available: true,
+      sections: [
+        {
+          eyebrow: "En production",
+          title: "Ne consommez rien",
+          items: ["Aucune nourriture ni boisson", "Pas de bonbon ni de chewing-gum"],
+          tone: "warning",
+        },
+        {
+          eyebrow: "Pause",
+          title: "Salle de pause uniquement",
+          statement: "Retirez votre blouse avant de manger ou de boire.",
+        },
+        {
+          eyebrow: "Allergènes",
+          title: "Le risque vient de l’extérieur",
+          items: [
+            "Pomembal conditionne des pommes",
+            "Aucun allergène alimentaire n’est manipulé dans le procédé",
+            "N’introduisez aucun aliment dans la zone de production",
+          ],
+        },
+        {
+          eyebrow: "Avant le retour",
+          title: "Repartez sans rien apporter",
+          items: ["Remettez votre blouse", "Lavez-vous les mains"],
+          tone: "navy",
+        },
+      ],
+    },
+    {
+      id: "fruits",
+      number: "05",
+      title: "Protéger les fruits",
+      description: "Éviter, isoler, signaler.",
+      color: "orange",
+      available: true,
+      sections: [
+        {
+          eyebrow: "Petit matériel",
+          title: "Pomembal uniquement",
+          items: [
+            "Stylos, couteaux et ciseaux numérotés et inventoriés",
+            "Aucun équivalent personnel",
+          ],
+        },
+        {
+          eyebrow: "Objet perdu ou cassé",
+          title: "Alertez. Recherchez. Sécurisez.",
+          statement: "Tout objet incomplet doit être signalé immédiatement.",
+          tone: "warning",
+        },
+        {
+          eyebrow: "Verre ou plastique dur",
+          title: "Isolez la zone",
+          items: [
+            "Arrêtez si nécessaire et alertez",
+            "Isolez les produits concernés",
+            "Ne ramassez rien sans consigne",
+          ],
+        },
+        {
+          eyebrow: "Fruit tombé au sol",
+          title: "Ne le remettez jamais dans le circuit",
+          statement: "Isolez-le et suivez la consigne du responsable.",
+          tone: "navy",
+        },
+      ],
+    },
+    {
+      id: "nettoyage",
+      number: "06",
+      title: "Nettoyage & nuisibles",
+      description: "Le bon matériel, dans la bonne zone.",
+      color: "teal",
+      available: true,
+      sections: [
+        {
+          eyebrow: "Règle de base",
+          title: "La fiche de zone fait foi",
+          items: [
+            "Utilisez le matériel et le produit indiqués",
+            "Respectez le dosage et les consignes",
+            "En cas de doute, demandez au responsable",
+          ],
+        },
+        {
+          eyebrow: "Code couleur",
+          title: "Un matériel = une zone",
+          colorGroups: [
+            {
+              title: "Éponges",
+              entries: [
+                { label: "Vert : station", color: "#2f9156" },
+                { label: "Bleu : lavabos", color: "#2f80c9" },
+                { label: "Jaune : cuvettes WC", color: "#f2c94c" },
+                { label: "Rose : salle de pause", color: "#e88baa" },
+              ],
+            },
+            {
+              title: "Outils",
+              entries: [
+                { label: "Orange : station", color: "#ef8b32" },
+                { label: "Jaune : salle de pause", color: "#f2c94c" },
+                { label: "Blanc : sanitaires", color: "#ffffff", border: true },
+              ],
+            },
+          ],
+        },
+        {
+          eyebrow: "Produits chimiques",
+          title: "Autorisés uniquement",
+          items: [
+            "Respectez l’affichage et le dosage",
+            "Ne mélangez jamais les produits",
+            "Ne laissez rien dans l’atelier",
+            "Stockez tout dans la zone prévue",
+          ],
+          tone: "navy",
+        },
+        {
+          eyebrow: "Nuisibles",
+          title: "Ne touchez pas. Signalez.",
+          statement: "Toute présence, trace ou déjection doit être signalée immédiatement.",
+          tone: "warning",
+        },
+        {
+          eyebrow: "Déchets",
+          title: "Triez et évacuez régulièrement",
+          items: ["Respectez le tri", "Ne laissez rien au sol", "Signalez toute anomalie"],
+        },
+      ],
+    },
+    {
+      id: "securite",
+      number: "07",
+      title: "Travailler en sécurité",
+      description: "Partager l’espace et arrêter avant d’intervenir.",
+      color: "red",
+      available: true,
+      image: "/images/circulation.png",
+      imageAlt: "Cheminement piéton matérialisé dans une station de conditionnement",
+      sections: [
+        {
+          eyebrow: "Circulation",
+          title: "Suivez le chemin",
+          items: [
+            "Restez dans les zones autorisées",
+            "Utilisez les zones piétonnes et respectez le marquage",
+            "Ne coupez pas la trajectoire d’un engin",
+            "Gardez une distance sûre",
+          ],
+        },
+        {
+          eyebrow: "Blocage ou danger",
+          title: "Arrêtez et alertez",
+          items: [
+            "Utilisez l’arrêt d’urgence si nécessaire",
+            "Prévenez le responsable ou la maintenance",
+            "N’intervenez jamais dans la machine",
+          ],
+        },
+        {
+          eyebrow: "Redémarrage",
+          title: "Attendez le feu vert",
+          statement: "Aucun redémarrage sans vérification et autorisation.",
+          tone: "warning",
+        },
+      ],
+    },
+    {
+      id: "urgence",
+      number: "08",
+      title: "Urgence & évacuation",
+      description: "Évacuer vite, sans revenir en arrière.",
+      color: "green",
+      available: true,
+      sections: [
+        {
+          eyebrow: "Alarme",
+          title: "Évacuez immédiatement",
+          items: ["Ne terminez pas votre tâche", "Ne récupérez pas vos affaires"],
+          tone: "warning",
+        },
+        {
+          eyebrow: "Sortie",
+          title: "Suivez les cheminements",
+          items: ["Utilisez les sorties indiquées", "Ne revenez jamais en arrière"],
+        },
+        {
+          eyebrow: "Après l’évacuation",
+          title: "Attendez l’autorisation",
+          statement: "Ne rentrez pas dans les locaux avant le feu vert d’un responsable.",
+        },
+        {
+          eyebrow: "Point de rassemblement",
+          title: "Parking visiteurs",
+          statement: "Le plan d’évacuation officiel Pomembal affiché sur le site fait foi.",
+          tone: "navy",
+        },
+      ],
+    },
+  ],
+  quizQuestions: [
+    {
+      question: "Après une pause, avant de reprendre le travail :",
+      answers: ["Je reprends directement", "Je me lave les mains", "Je mets des gants personnels"],
+      correct: 1,
+      explanation: "Les mains doivent être lavées avant chaque reprise du travail.",
+    },
+    {
+      question: "Quel bijou est autorisé chez Pomembal ?",
+      answers: ["Une montre", "Une alliance simple", "Un bracelet fin"],
+      correct: 1,
+      explanation: "Aucun bijou n’est autorisé, sauf une alliance simple.",
+    },
+    {
+      question: "Où peut-on manger ou boire ?",
+      answers: ["Dans la salle de pause, blouse retirée", "Au bout de la ligne", "Dans les vestiaires avec la blouse"],
+      correct: 0,
+      explanation: "La consommation est autorisée uniquement en salle de pause, après avoir retiré la blouse.",
+    },
+    {
+      question: "Un stylo Pomembal est cassé ou incomplet. Que faites-vous ?",
+      answers: ["Je le jette et continue", "J’alerte, je recherche et je sécurise", "Je prends un stylo personnel"],
+      correct: 1,
+      explanation: "Tout objet perdu, cassé ou incomplet doit être signalé, recherché et sécurisé.",
+    },
+    {
+      question: "Vous voyez une trace de nuisible. Quel est le bon réflexe ?",
+      answers: ["Je ne touche pas et je signale", "Je nettoie sans rien dire", "Je touche pour vérifier"],
+      correct: 0,
+      explanation: "Ne touchez pas. Signalez immédiatement toute présence, trace ou déjection.",
+    },
+    {
+      question: "Avec les produits chimiques, vous devez :",
+      answers: ["Mélanger pour renforcer l’effet", "Suivre l’affichage et le dosage", "Laisser le produit près de la ligne"],
+      correct: 1,
+      explanation: "Utilisez uniquement les produits autorisés, respectez le dosage et ne les mélangez jamais.",
+    },
+    {
+      question: "Un objet est coincé dans une machine. Que faites-vous ?",
+      answers: ["Je mets la main dans la machine", "J’arrête si nécessaire et j’alerte", "Je redémarre pour le faire sortir"],
+      correct: 1,
+      explanation: "N’intervenez jamais dans la machine. Arrêtez si nécessaire et alertez.",
+    },
+    {
+      question: "L’alarme retentit. Que faites-vous ?",
+      answers: ["Je termine ma tâche", "Je récupère mes affaires", "J’évacue vers le parking visiteurs"],
+      correct: 2,
+      explanation: "Évacuez immédiatement et rejoignez le point de rassemblement au parking visiteurs.",
+    },
+  ],
+  essentialReflexes: [
+    "Tenue conforme",
+    "Mains lavées",
+    "Rien en production",
+    "Isoler une anomalie",
+    "Bon matériel de nettoyage",
+    "Signaler les nuisibles",
+    "Respecter les voies",
+    "Évacuer à l’alarme",
+  ],
+};

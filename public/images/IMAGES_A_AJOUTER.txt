@@ -1,0 +1,20 @@
+AJOUT DES IMAGES
+
+Déposez vos fichiers dans ce dossier en conservant exactement ces noms :
+
+Version WebP (visuels du nouveau livret et du portail)
+- arret-urgence.webp
+- circulation.webp
+- equipe-pomembal.webp
+- hero-station.webp
+- plan-station.webp
+- site-pomembal.webp
+- tenue.webp
+- verger-pomembal.webp
+
+Version PNG (visuels de la formation Hygiène et Sécurité dans les quatre langues)
+- circulation.png
+- lavage-mains.png
+- tenue.png
+
+Le site peut être téléversé sans les images, mais les emplacements correspondants seront vides tant que ces fichiers ne seront pas ajoutés.
