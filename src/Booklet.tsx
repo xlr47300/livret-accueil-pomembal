@@ -6,11 +6,18 @@ import type { LanguageCode, ThemeId } from "./content";
 const chapterIds = ["bienvenue", "arrivee", "contacts", "horaires", "tenue", "securite", "emballage", "environnement", "collectif", "idees"];
 const contactNames = ["Vincent et Sandrine Carrère-Loustaunau", "Dina", "Romain", "Laetitia", "Dina", "Xavier"];
 const directionEmails = ["tradipom@gmail.com", "sandrine.tradipom@gmail.com"];
+const documentLabels = {
+  FR: { created: "Date de création", updated: "Mise à jour" },
+  PL: { created: "Data utworzenia", updated: "Data aktualizacji" },
+  PT: { created: "Data de criação", updated: "Data de atualização" },
+  AR: { created: "تاريخ الإنشاء", updated: "تاريخ التحديث" },
+};
 
 type Props = { language: LanguageCode; onTraining: () => void; onTheme: (id: ThemeId, returnToId: string) => void };
 
 export default function Booklet({ language, onTraining, onTheme }: Props) {
   const t = bookletText[language];
+  const documentLabel = documentLabels[language];
   const [active, setActive] = useState(chapterIds[0]);
   const dialog = useRef<HTMLDialogElement>(null);
   const planButton = useRef<HTMLButtonElement>(null);
@@ -115,6 +122,11 @@ export default function Booklet({ language, onTraining, onTheme }: Props) {
             <h2>{t.next.title}</h2><p>{t.next.intro}</p>
             <button className="primary-button" onClick={onTraining}>{t.next.button}<ArrowRight size={19} aria-hidden="true" /></button></div></section>
           <a href="#main-content" className="handbook-top"><ChevronUp size={17} />{t.nav[3]}</a>
+          <footer className="handbook-document-info" aria-label="DOC 25">
+            <strong dir="ltr">POMEMBAL · DOC 25 · V2</strong>
+            <span>{documentLabel.created} : <time dateTime="2025-03-17" dir="ltr">17/03/2025</time></span>
+            <span>{documentLabel.updated} : <time dateTime="2026-09-23" dir="ltr">23/09/2026</time></span>
+          </footer>
         </div>
       </div>
       <dialog className="plan-dialog" ref={dialog} onClose={() => planButton.current?.focus()}
