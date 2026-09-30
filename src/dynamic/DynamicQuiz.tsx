@@ -78,7 +78,7 @@ export default function DynamicQuiz({ language, visible }: { language: LanguageC
     finally { if (generation === loadId.current) setBusy(false); }
   }
   function start() {
-    if (!quiz) return;
+    if (!quiz || running.current) return;
     try {
       attempt.current = nextAttempt(quiz.id, quiz.version, quiz.identification === 'ANONYME' ? '' : participant.trim());
       sessionId.current = crypto.randomUUID(); started.current = Date.now();
@@ -187,7 +187,7 @@ export default function DynamicQuiz({ language, visible }: { language: LanguageC
         <p role="status">{saving ? effectiveLabels.saving : saved ? effectiveLabels.saved : effectiveLabels.provisional}</p>
         {!saved && !saving && current && <button className="secondary-button quiz-next" onClick={() => void send(current)}>{effectiveLabels.retry}</button>}
         <div className="dynamic-actions">
-          <button className="primary-button" disabled={saving} onClick={start}>{effectiveLabels.restart}</button>
+          <button className="primary-button" disabled={saving || !saved} onClick={start}>{effectiveLabels.restart}</button>
           <button className="secondary-button" disabled={saving} onClick={finish}>{effectiveLabels.finish}</button>
         </div>
       </section>}

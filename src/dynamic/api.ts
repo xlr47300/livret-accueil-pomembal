@@ -7,12 +7,21 @@ export async function request<T>(params: Record<string, string> | Attempt): Prom
     method: post ? 'POST' : 'GET', cache: 'no-store',
     headers: post ? { 'Content-Type': 'application/json' } : undefined,
     body: post ? JSON.stringify(params) : undefined,
-    signal: AbortSignal.timeout(35000)
+    signal: AbortSignal.timeout(65000)
   });
   const body = await response.json();
   if (!response.ok || !body.ok) throw new Error(body.error || 'NETWORK');
   return body.data as T;
 }
-export const listQuizzes = (language: LanguageCode) => request<QuizSummary[]>({ action: 'listQuizzes', language });
+const lists = new Map<LanguageCode, { expires: number; promise: Promise<QuizSummary[]> }>();
+export const listQuizzes = (language: LanguageCode) => {
+  const cached = lists.get(language);
+  if (cached && cached.expires > Date.now()) return cached.promise;
+  const promise = request<QuizSummary[]>({ action: 'listQuizzes', language }).catch(error => {
+    lists.delete(language); throw error;
+  });
+  lists.set(language, { expires: Date.now() + 30000, promise });
+  return promise;
+};
 export const getQuiz = (id: string, version: string, language: LanguageCode) => request<Questionnaire>({ action: 'getQuiz', quizId: id, version, language });
 export const submitAttempt = (attempt: Attempt) => request<Result>(attempt);

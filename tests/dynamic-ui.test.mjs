@@ -121,7 +121,7 @@ test('React : FR/PL/PT/AR, identification, RTL, retry persistant, nouvelle tenta
     await act(async()=>root.unmount());root=createRoot(document.getElementById('root'));
     const {default:App}=await import(pathToFileURL(path.join(temp,'App.js')));
     await act(async()=>root.render(React.createElement(App)));await tick();
-    await click(button('Commencer'));
+    await click(button('Démarrer'));
     await click([...document.querySelectorAll('.language-card')].find(n=>n.textContent.includes('Français')));
     assert.ok(document.querySelector('.portal-card.evaluations'));
     await click('.portal-card.training');

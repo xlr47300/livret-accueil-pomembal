@@ -38,7 +38,8 @@ import {
   ThemeId,
 } from "./content";
 import { uiExtrasByLanguage, type UiExtras } from "./content/ui";
-
+import Welcome from "./Welcome";
+import Booklet from "./Booklet";
 import DynamicQuiz from "./dynamic/DynamicQuiz";
 import { dynamicCopy } from "./dynamic/copy";
 
@@ -113,7 +114,7 @@ function Header({
           </button>
         ) : <div className="header-spacer" />}
         <div className="header-center"><Brand />{onPortal && <button className="header-portal-link" onClick={onPortal}>{({ FR: "Mes modules", PL: "Moje moduły", PT: "Os meus módulos", AR: "وحداتي" } as Record<LanguageCode, string>)[language]}</button>}</div>
-        {onHome && <button className="icon-button header-home" onClick={onHome} aria-label="Retour à l’accueil initial" title="Retour à l’accueil initial"><HomeIcon size={20} /></button>}
+        {onHome && <button className="icon-button header-home" onClick={onHome} aria-label={({ FR: "Accueil", PL: "Strona główna", PT: "Início", AR: "الرئيسية" } as Record<LanguageCode, string>)[language]} title={({ FR: "Accueil", PL: "Strona główna", PT: "Início", AR: "الرئيسية" } as Record<LanguageCode, string>)[language]}><HomeIcon size={20} /></button>}
         {languageSelected ? (
           <button className="language-chip" onClick={onLanguage} aria-label={copy.header.language}>{language}</button>
         ) : <span className="language-chip passive" aria-label="Français">FR</span>}
@@ -133,23 +134,6 @@ function Header({
   );
 }
 
-function Welcome({ onStart }: { onStart: () => void }) {
-  return (
-    <main className="portal-welcome">
-      <img className="portal-welcome-image" src="/images/site-pomembal.jpg" alt="Vue aérienne du site Pomembal et des vergers" />
-      <div className="portal-welcome-overlay" />
-      <section className="portal-welcome-content">
-        <Brand />
-        <p className="welcome-eyebrow">POMEMBAL · TRADIPOM</p>
-        <h1>Bienvenue chez Pomembal</h1>
-        <p>Informations d’accueil et formations pour bien commencer dans la station.</p>
-        <button className="primary-button welcome-button" onClick={onStart}>
-          Commencer <ArrowRight size={21} />
-        </button>
-      </section>
-    </main>
-  );
-}
 
 const portalCopy: Record<LanguageCode, {
   kicker: string; title: string; intro: string; booklet: string; bookletText: string;
@@ -163,27 +147,28 @@ const portalCopy: Record<LanguageCode, {
 
 function Portal({ language, onBooklet, onTraining, onQuizzes }: { language: LanguageCode; onBooklet: () => void; onTraining: () => void; onQuizzes: () => void }) {
   const labels = portalCopy[language];
-  const bookletAvailable = language === "FR";
   return (
-    <main className="page-shell portal-shell">
+    <main id="main-content" tabIndex={-1} className="page-shell portal-shell">
       <div className="section-heading portal-heading">
         <p className="kicker plain">{labels.kicker}</p>
         <h1>{labels.title}</h1>
         <p>{labels.intro}</p>
       </div>
       <div className="portal-grid">
-        <button className={`portal-card booklet ${bookletAvailable ? "" : "disabled"}`} onClick={bookletAvailable ? onBooklet : undefined} disabled={!bookletAvailable}>
+        <button className="portal-card booklet" onClick={onBooklet}>
+          <img className="module-photo" src="/images/site-pomembal.webp" alt="" />
           <span className="portal-card-icon"><BookOpen /></span>
           <span className="portal-card-copy"><strong>{labels.booklet}</strong><small>{labels.bookletText}</small></span>
-          <span className="portal-card-action">{bookletAvailable ? labels.open : labels.soon}{bookletAvailable && <ChevronRight />}</span>
+          <span className="portal-card-action">{labels.open}<ChevronRight /></span>
         </button>
         <button className="portal-card training" onClick={onTraining}>
+          <img className="module-photo" src="/images/hero-station.webp" alt="" />
           <span className="portal-card-icon"><GraduationCap /></span>
           <span className="portal-card-copy"><strong>{labels.training}</strong><small>{labels.trainingText}</small></span>
           <span className="portal-card-action">{labels.open}<ChevronRight /></span>
         </button>
         <button className="portal-card evaluations" onClick={onQuizzes}>
-          <span className="portal-card-icon"><Sparkles /></span>
+          <span className="portal-card-icon"><GraduationCap /></span>
           <span className="portal-card-copy"><strong>{dynamicCopy[language].title}</strong><small>{dynamicCopy[language].description}</small></span>
           <span className="portal-card-action">{labels.open}<ChevronRight /></span>
         </button>
@@ -192,90 +177,6 @@ function Portal({ language, onBooklet, onTraining, onQuizzes }: { language: Lang
   );
 }
 
-const contacts = [
-  ["Direction", "Vincent et Sandrine Carrère-Loustaunau"],
-  ["Responsable de station et sécurité", "Dina"],
-  ["Responsable verger", "Romain"],
-  ["Comptabilité", "Laetitia"],
-  ["Sauveteur secouriste du travail", "Dina"],
-  ["Responsable qualité et emballage", "Xavier"],
-];
-
-function Booklet({ onTraining }: { onTraining: () => void }) {
-  return (
-    <main className="booklet-shell">
-      <section className="booklet-intro">
-        <p className="kicker plain">Votre premier jour</p>
-        <h1>Bienvenue chez Pomembal</h1>
-        <p>Ce livret rassemble les repères utiles pour commencer votre travail dans la station. En cas de doute, demandez toujours à votre responsable.</p>
-        <div className="intro-checks">
-          <span><Check /> Présentez-vous au responsable indiqué</span>
-          <span><Check /> Prenez connaissance de votre poste et de vos horaires</span>
-          <span><Check /> Utilisez la tenue et les équipements remis</span>
-        </div>
-      </section>
-
-      <div className="booklet-sections">
-        <article className="booklet-section">
-          <span className="booklet-icon"><Building2 /></span>
-          <div><p className="eyebrow">L’entreprise</p><h2>Pomembal et vos contacts</h2>
-            <p>Pomembal conditionne des pommes destinées à différents clients en France et à l’étranger. La qualité de notre travail dépend de l’attention et du sérieux de chacun.</p>
-            <p><strong>Adresse :</strong> 1270–1274 route de Lalandette, 47300 Bias</p>
-            <dl className="contact-list">{contacts.map(([role, name]) => <div key={role}><dt>{role}</dt><dd>{name}</dd></div>)}</dl>
-            <p className="urgent-contact"><strong>En cas d’urgence : 112</strong></p>
-          </div>
-        </article>
-
-        <article className="booklet-section">
-          <span className="booklet-icon"><CalendarClock /></span>
-          <div><p className="eyebrow">Organisation</p><h2>Horaires et vie quotidienne</h2>
-            <p><strong>Amplitudes maximales possibles :</strong> du lundi au vendredi, de 7 h 50 à 12 h et de 13 h à 18 h ; le samedi, de 7 h 50 à 12 h.</p>
-            <p>Ces plages ne constituent pas votre temps de travail systématique. Suivez le planning et les horaires communiqués par l’encadrement.</p>
-            <ul><li>Retirez votre blouse avant d’entrer en salle de pause.</li><li>Nettoyez votre place après utilisation.</li><li>Remettez votre blouse et lavez-vous les mains avant la reprise.</li></ul>
-          </div>
-        </article>
-
-        <article className="booklet-section">
-          <span className="booklet-icon"><HardHat /></span>
-          <div><p className="eyebrow">Avant d’entrer</p><h2>Tenue et vestiaires</h2>
-            <ul><li>Blouse propre, complète, fermée et adaptée.</li><li>Cheveux entièrement couverts.</li><li>Chaussures propres, fermées et appropriées au poste.</li><li>Ongles courts, propres, sans vernis ni faux ongles.</li><li>Aucun bijou, sauf une alliance simple ; aucune montre ni bracelet.</li><li>Téléphone et effets personnels rangés dans l’espace prévu.</li></ul>
-            <p><strong>La blouse doit être lavée à 60 °C au minimum une fois par semaine</strong>, et plus rapidement si elle est sale ou souillée.</p>
-          </div>
-        </article>
-
-        <article className="booklet-section">
-          <span className="booklet-icon"><ShieldCheck /></span>
-          <div><p className="eyebrow">Votre sécurité</p><h2>Circulation, machines et urgence</h2>
-            <ul><li>Respectez les cheminements piétons et les marquages au sol.</li><li>Ne traversez jamais la trajectoire d’un engin.</li><li>N’intervenez jamais dans une machine et ne retirez aucune protection.</li><li>En cas de blocage, arrêtez votre action et prévenez un responsable.</li></ul>
-            <p><strong>À l’alarme :</strong> évacuez immédiatement, ne récupérez pas vos affaires et rejoignez le point de rassemblement sur le parking visiteurs.</p>
-          </div>
-        </article>
-
-        <article className="booklet-section">
-          <span className="booklet-icon"><PackageCheck /></span>
-          <div><p className="eyebrow">Au poste</p><h2>Les réflexes à l’emballage</h2>
-            <ul><li>Manipulez les fruits avec soin et respectez les consignes de tri.</li><li>Utilisez uniquement le matériel fourni par Pomembal.</li><li>Ne remettez jamais dans le circuit un fruit tombé au sol.</li><li>Signalez un emballage sale, un objet perdu ou cassé, du verre, du plastique dur ou un corps étranger.</li><li>Prévenez le responsable en cas d’erreur d’étiquette, de variété, de calibre ou d’emballage.</li></ul>
-            <blockquote>Je vois. J’agis si je peux le faire sans danger. J’alerte mon responsable.</blockquote>
-          </div>
-        </article>
-
-        <article className="booklet-section idea-section">
-          <span className="booklet-icon"><Lightbulb /></span>
-          <div><p className="eyebrow">Expression</p><h2>Vos idées comptent</h2>
-            <p>Une boîte à idées est disponible dans la salle de pause. Vous pouvez y déposer <strong>anonymement</strong> une suggestion, signaler une difficulté ou proposer une amélioration concernant le travail, la sécurité, la qualité ou la vie dans l’entreprise.</p>
-            <p>Chaque remarque peut nous aider à faire avancer les choses et à améliorer le quotidien de tous. Vous pouvez également remettre votre proposition directement à un responsable si vous préférez en parler.</p>
-          </div>
-        </article>
-      </div>
-
-      <section className="booklet-finish">
-        <GraduationCap />
-        <div><h2>Vous connaissez maintenant les principaux repères</h2><p>Poursuivez avec la formation Hygiène et Sécurité et son quiz final.</p></div>
-        <button className="primary-button" onClick={onTraining}>Commencer la formation <ArrowRight size={20} /></button>
-      </section>
-    </main>
-  );
-}
 
 function LanguageChoice({ onSelect }: { onSelect: (code: LanguageCode) => void }) {
   const { copy } = useLocale();
@@ -390,7 +291,7 @@ function ThemeDetail({
         </div>
         {theme.image && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={theme.image} alt={theme.imageAlt || ""} />
+          <img src={theme.image.replace(/\.(png|jpe?g)$/, ".webp")} alt={theme.imageAlt || ""} />
         )}
       </section>
       <div className="learning-stream">
@@ -429,7 +330,7 @@ function ThemeDetail({
         {theme.id === "securite" && (
           <figure className="inline-visual">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/arret-urgence.png" alt={extras.emergencyAlt} />
+            <img src="/images/arret-urgence.webp" alt={extras.emergencyAlt} />
             <figcaption>{extras.emergencyCaption}</figcaption>
           </figure>
         )}
@@ -570,6 +471,8 @@ export default function Home() {
   const [quiz, setQuiz] = useState<QuizState>(emptyQuiz);
   const [languageSelected, setLanguageSelected] = useState(false);
   const [languageReturn, setLanguageReturn] = useState<Screen | null>(null);
+  const [bookletReturnId, setBookletReturnId] = useState<string | null>(null);
+  const pendingBookletSection = useRef<string | null>(null);
   const [storageReady, setStorageReady] = useState(false);
   const [justCompletedThemeId, setJustCompletedThemeId] = useState<ThemeId | null>(null);
   const completionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -612,15 +515,25 @@ export default function Home() {
   useEffect(() => {
     document.documentElement.lang = language.toLowerCase();
     document.documentElement.dir = content.direction;
-    document.title = screen === "themes" || screen === "theme" || screen === "quiz" || screen === "recap"
-      ? `${copy.welcome.title} Pomembal`
-      : "Accueil et formations Pomembal";
+    document.title = screen === "booklet" ? `${portalCopy[language].booklet} · Pomembal`
+      : screen === "themes" || screen === "theme" || screen === "quiz" || screen === "recap"
+        ? `${copy.welcome.title} Pomembal`
+        : "Accueil et formations Pomembal";
     document.querySelector('meta[name="description"]')?.setAttribute("content", screen === "booklet"
       ? "Livret d’accueil des nouveaux salariés Pomembal."
       : "Portail d’accueil, d’information et de formation des équipes Pomembal.");
   }, [content.direction, copy.welcome.title, language, screen]);
 
-  useEffect(() => { window.scrollTo({ top: 0, behavior: "smooth" }); }, [screen, activeThemeId]);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+    if (screen === "booklet" && pendingBookletSection.current) {
+      const sectionId = pendingBookletSection.current;
+      pendingBookletSection.current = null;
+      window.requestAnimationFrame(() => document.getElementById(sectionId)?.scrollIntoView({ block: "start" }));
+    }
+    const main = document.querySelector<HTMLElement>("main");
+    if (main) { main.id = "main-content"; main.tabIndex = -1; main.focus({ preventScroll: true }); }
+  }, [screen, activeThemeId]);
 
   useEffect(() => () => {
     if (completionTimer.current) window.clearTimeout(completionTimer.current);
@@ -634,14 +547,13 @@ export default function Home() {
     setLanguage(code);
     setLanguageSelected(true);
     try { window.localStorage.setItem(STORAGE_LANGUAGE, code); } catch { /* stockage facultatif */ }
-    const destination = languageReturn === "booklet" && code !== "FR"
-      ? "portal"
-      : languageReturn && languageReturn !== "languages" ? languageReturn : "portal";
+    const destination = languageReturn && languageReturn !== "languages" ? languageReturn : "portal";
     setScreen(destination);
     setLanguageReturn(null);
   };
 
   const openLanguage = () => {
+    clearCompletionTimer();
     setLanguageReturn(screen);
     setScreen("languages");
   };
@@ -653,6 +565,11 @@ export default function Home() {
       : { ...current, inProgress: [...current.inProgress, id] });
     setActiveThemeId(id);
     setScreen("theme");
+  };
+
+  const openThemeFromBooklet = (id: ThemeId, returnToId: string) => {
+    setBookletReturnId(returnToId);
+    openTheme(id);
   };
 
   const startQuiz = () => {
@@ -708,31 +625,46 @@ export default function Home() {
   };
 
   const back = () => {
+    clearCompletionTimer();
     if (screen === "languages") {
       setScreen(languageReturn || "welcome");
       setLanguageReturn(null);
     } else if (screen === "portal") setScreen("languages");
-    else if (screen === "booklet" || screen === "themes" || screen === "dynamicQuiz") setScreen("portal");
-    else if (screen === "theme" || screen === "quiz" || screen === "recap") returnToThemes();
+    else if (screen === "booklet" || screen === "themes" || screen === "dynamicQuiz") {
+      if (screen === "themes" && bookletReturnId) {
+        pendingBookletSection.current = bookletReturnId;
+        setBookletReturnId(null);
+        setActiveThemeId(null);
+        setScreen("booklet");
+      } else setScreen("portal");
+    } else if (screen === "theme" || screen === "quiz" || screen === "recap") {
+      if (bookletReturnId) {
+        pendingBookletSection.current = bookletReturnId;
+        setBookletReturnId(null);
+        setActiveThemeId(null);
+        setScreen("booklet");
+      } else returnToThemes();
+    }
   };
 
   return (
     <LocaleContext.Provider value={{ content, copy, extras }}>
       <div className={`app-shell locale-${language.toLowerCase()}`} dir={content.direction} lang={language.toLowerCase()}>
+        <a className="skip-link" href="#main-content">{({FR: "Aller au contenu", PL: "Przejdź do treści", PT: "Saltar para o conteúdo", AR: "انتقل إلى المحتوى"} as Record<LanguageCode,string>)[language]}</a>
         {screen !== "welcome" && <Header
           onBack={back}
-          onHome={() => { clearCompletionTimer(); setScreen("welcome"); }}
-          onPortal={languageSelected && screen !== "portal" && screen !== "languages" ? () => { clearCompletionTimer(); setScreen("portal"); } : undefined}
+          onHome={() => { clearCompletionTimer(); setLanguageReturn(null); setScreen("welcome"); }}
+          onPortal={languageSelected && screen !== "portal" ? () => { clearCompletionTimer(); setLanguageReturn(null); setScreen("portal"); } : undefined}
           onLanguage={openLanguage}
           completedCount={progress.completed.length}
           languageSelected={languageSelected}
           language={language}
         />}
-        {screen === "welcome" && <Welcome onStart={() => setScreen("languages")} />}
+        {screen === "welcome" && <Welcome onStart={() => { setLanguageReturn(null); setScreen("languages"); }} />}
         {screen === "languages" && <LanguageChoice onSelect={selectLanguage} />}
         {screen === "portal" && <Portal language={language} onBooklet={() => setScreen("booklet")} onTraining={() => setScreen("themes")} onQuizzes={() => setScreen("dynamicQuiz")} />}
         <DynamicQuiz language={language} visible={screen === "dynamicQuiz"} />
-        {screen === "booklet" && <Booklet onTraining={() => setScreen("themes")} />}
+        {screen === "booklet" && <Booklet language={language} onTraining={() => { setBookletReturnId("idees"); setScreen("themes"); }} onTheme={openThemeFromBooklet} />}
         {screen === "themes" && <Themes progress={progress} onOpen={openTheme} onQuiz={startQuiz} />}
         {screen === "theme" && activeTheme && (
           <ThemeDetail
@@ -751,3 +683,4 @@ export default function Home() {
     </LocaleContext.Provider>
   );
 }
+

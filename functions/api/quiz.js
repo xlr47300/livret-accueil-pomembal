@@ -28,7 +28,7 @@ export async function onRequest({ request, env }) {
     const upstream = await fetch(url.toString(), {
       method: request.method, redirect: 'follow',
       headers: body ? { 'Content-Type': 'text/plain;charset=utf-8' } : undefined,
-      body, signal: AbortSignal.timeout(25000)
+      body, signal: AbortSignal.timeout(55000)
     });
     if (!upstream.ok) throw new Error('UPSTREAM');
     const data = await upstream.json();
