@@ -109,8 +109,8 @@ function Header({
     <header className="site-header">
       <div className="header-inner">
         {onBack ? (
-          <button className="icon-button" onClick={onBack} aria-label={copy.header.back}>
-            <ArrowLeft size={22} />
+          <button className="icon-button" style={{ width: "auto", gap: 6, paddingInline: 10 }} onClick={onBack} aria-label={copy.header.back}>
+            <ArrowLeft size={22} /><span style={{ fontSize: 13, fontWeight: 650 }}>{copy.header.back}</span>
           </button>
         ) : <div className="header-spacer" />}
         <div className="header-center"><Brand />{onPortal && <button className="header-portal-link" onClick={onPortal}>{({ FR: "Mes modules", PL: "Moje moduły", PT: "Os meus módulos", AR: "وحداتي" } as Record<LanguageCode, string>)[language]}</button>}</div>
@@ -465,6 +465,8 @@ function Recap({ onReview, onThemes }: { onReview: () => void; onThemes: () => v
 
 export default function Home() {
   const [screen, setScreen] = useState<Screen>("welcome");
+  const previousRoute = useRef("welcome|");
+  const restoringRoute = useRef<string | null>(null);
   const [language, setLanguage] = useState<LanguageCode>("FR");
   const [activeThemeId, setActiveThemeId] = useState<ThemeId | null>(null);
   const [progress, setProgress] = useState<ThemeProgress>(emptyProgress);
@@ -480,6 +482,41 @@ export default function Home() {
   const copy = copyByLanguage[language];
   const extras = uiExtrasByLanguage[language];
   const themes = content.themes;
+
+  // Track screens so the browser Back/Forward buttons stay inside the app.
+  // The selected language remains in React state and local storage.
+  useEffect(() => {
+    const initial = { screen: "welcome", activeThemeId: null };
+    window.history.replaceState({ ...window.history.state, pomembalNavigation: initial }, "");
+    const restore = (event: PopStateEvent) => {
+      const route = event.state?.pomembalNavigation;
+      const allowed: Screen[] = ["welcome", "languages", "portal", "booklet", "themes", "theme", "quiz", "recap", "dynamicQuiz"];
+      if (!route || !allowed.includes(route.screen)) return;
+      clearCompletionTimer();
+      const themeId: ThemeId | null = fr.themes.some(theme => theme.id === route.activeThemeId) ? route.activeThemeId : null;
+      const destination: Screen = route.screen === "theme" && !themeId ? "themes" : route.screen;
+      const key = `${destination}|${themeId || ""}`;
+      restoringRoute.current = previousRoute.current === key ? null : key;
+      setLanguageReturn(null);
+      setJustCompletedThemeId(null);
+      setActiveThemeId(themeId);
+      setScreen(destination);
+    };
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
+  }, []);
+
+  useEffect(() => {
+    const key = `${screen}|${activeThemeId || ""}`;
+    if (previousRoute.current === key) return;
+    previousRoute.current = key;
+    if (restoringRoute.current === key) {
+      restoringRoute.current = null;
+      return;
+    }
+    restoringRoute.current = null;
+    window.history.pushState({ ...window.history.state, pomembalNavigation: { screen, activeThemeId } }, "");
+  }, [screen, activeThemeId]);
 
   useEffect(() => {
     let savedProgress = emptyProgress;
@@ -653,7 +690,7 @@ export default function Home() {
         <a className="skip-link" href="#main-content">{({FR: "Aller au contenu", PL: "Przejdź do treści", PT: "Saltar para o conteúdo", AR: "انتقل إلى المحتوى"} as Record<LanguageCode,string>)[language]}</a>
         {screen !== "welcome" && <Header
           onBack={back}
-          onHome={() => { clearCompletionTimer(); setLanguageReturn(null); setScreen("welcome"); }}
+          onHome={() => { clearCompletionTimer(); setLanguageReturn(null); setScreen(languageSelected ? "portal" : "welcome"); }}
           onPortal={languageSelected && screen !== "portal" ? () => { clearCompletionTimer(); setLanguageReturn(null); setScreen("portal"); } : undefined}
           onLanguage={openLanguage}
           completedCount={progress.completed.length}
