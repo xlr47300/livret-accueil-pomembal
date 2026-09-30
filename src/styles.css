@@ -373,6 +373,7 @@ button.portal-card:not(.disabled):hover { transform: translateY(-3px); box-shado
   .booklet-finish .primary-button { grid-column: 1 / -1; width: 100%; }
 }
 
+
 /* Quiz dynamiques : composants et variables du portail existant. */
 .portal-card.evaluations { grid-column: 1 / -1; min-height: 150px; }
 .portal-card.evaluations .portal-card-icon { background: #fff1df; color: var(--orange); }
@@ -392,3 +393,12 @@ button.portal-card:not(.disabled):hover { transform: translateY(-3px); box-shado
   .portal-card.evaluations { grid-column: auto; min-height: 210px; }
   .dynamic-actions > button,.pending-row > button { width: 100%; }
 }
+
+.welcome-cover { min-height:100svh; position:relative; display:grid; place-items:center; overflow:hidden; background:#16352b; }
+.welcome-cover > img,.welcome-cover-shade { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+.welcome-cover-shade { background:linear-gradient(180deg,rgba(10,30,24,.2),rgba(10,30,24,.68)); }
+.welcome-cover-content { position:relative; text-align:center; color:white; padding:32px 22px; max-width:900px; }
+.welcome-cover-content > p { font-weight:750; letter-spacing:.14em; }
+.welcome-cover-content h1 { font-size:clamp(36px,7vw,76px); line-height:1.08; margin:24px 0 36px; }
+.welcome-cover-content button { margin:auto; }
+.welcome-cover-content > span { display:block; margin-top:24px; font-size:15px; }
