@@ -4,10 +4,13 @@ import type { LanguageCode } from '../content';
 import { dynamicCopy } from './copy';
 import { getQuiz, listQuizzes, submitAttempt } from './api';
 import { nextAttempt, readPending, removePending, savePending } from './storage';
-import type { Letter, Pending, Questionnaire, QuizSummary, Result } from './types';
+import CompanyBrand from '../CompanyBrand';
+import { companyQuizCopy, quizCompany } from './company';
+import type { Company, Letter, Pending, Questionnaire, QuizSummary, Result } from './types';
 
-export default function DynamicQuiz({ language, visible }: { language: LanguageCode; visible: boolean }) {
+export default function DynamicQuiz({ language, visible, company, onHygieneQuiz }: { language: LanguageCode; visible: boolean; company?: Company; onHygieneQuiz?: () => void }) {
   const labels = dynamicCopy[language];
+  const sectionCopy = companyQuizCopy[language];
   const [list, setList] = useState<QuizSummary[]>([]);
   const [quiz, setQuiz] = useState<Questionnaire | null>(null);
   const [participant, setParticipant] = useState('');
@@ -15,6 +18,7 @@ export default function DynamicQuiz({ language, visible }: { language: LanguageC
   const [index, setIndex] = useState(0);
   const [answers, setAnswers] = useState<(Letter | null)[]>([]);
   const [pending, setPending] = useState<Pending[]>([]);
+  const sectionPending = pending.filter(item => !company || quizCompany(item.quiz) === company);
   const [result, setResult] = useState<Result | null>(null);
   const [current, setCurrent] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
@@ -57,13 +61,13 @@ export default function DynamicQuiz({ language, visible }: { language: LanguageC
     const generation = ++loadId.current;
     setBusy(true); setError(null);
     listQuizzes(language).then(items => {
-      if (generation === loadId.current) setList(items.filter(item => item.type === 'QCM'));
+      if (generation === loadId.current) setList(items.filter(item => item.type === 'QCM' && (!company || quizCompany(item) === company)));
     }).catch(() => { if (generation === loadId.current) setError('load'); })
       .finally(() => { if (generation === loadId.current) setBusy(false); });
     return () => { loadId.current++; };
   // answers are intentionally captured only when a language change starts.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language, visible, stage, reload]);
+  }, [language, visible, stage, reload, company]);
 
   async function select(summary: QuizSummary) {
     const generation = ++loadId.current;
@@ -126,15 +130,20 @@ export default function DynamicQuiz({ language, visible }: { language: LanguageC
   return <div hidden={!visible}>
     <main className="quiz-shell dynamic-quiz" aria-busy={busy || saving}>
       {stage === 'list' && <>
-        <div className="section-heading"><h1>{labels.title}</h1><p>{labels.description}</p></div>
-        {pending.length > 0 && <section className="quiz-card pending-attempts">
+        <div className="section-heading company-quiz-heading">{company && <CompanyBrand company={company} />}<h1>{labels.title}{company ? ` ${company === 'POMEMBAL' ? 'Pomembal' : 'Tradipom'}` : ''}</h1><p>{company ? sectionCopy[company] : labels.description}</p></div>
+        {company === 'POMEMBAL' && onHygieneQuiz && <div className="dynamic-list hygiene-quiz-entry"><button className="portal-card training" onClick={onHygieneQuiz}>
+          <span className="portal-card-icon"><GraduationCap /></span>
+          <span className="portal-card-copy"><strong>{sectionCopy.hygieneTitle}</strong><small>{sectionCopy.hygieneText}</small></span>
+          <span className="portal-card-action">{labels.start}<ChevronRight /></span>
+        </button></div>}
+        {sectionPending.length > 0 && <section className="quiz-card pending-attempts">
           <h2>{labels.pending}</h2>
-          {pending.map(item => <div className="pending-row" key={item.payload.sessionId}>
+          {sectionPending.map(item => <div className="pending-row" key={item.payload.sessionId}>
             <span>{item.quiz.title} · {labels.attempt} {item.payload.attempt}</span>
             <button className="secondary-button" disabled={saving} onClick={() => void send(item)}>{labels.retry}</button>
           </div>)}
         </section>}
-        {!busy && !error && list.length === 0 && <p role="status">{labels.empty}</p>}
+        {!busy && !error && list.length === 0 && !(company === 'POMEMBAL' && onHygieneQuiz) && <p role="status">{labels.empty}</p>}
         {!busy && !error && <div className="dynamic-list">{list.map(item => <button className="portal-card training" key={item.id} onClick={() => void select(item)}>
           <span className="portal-card-icon"><GraduationCap /></span>
           <span className="portal-card-copy"><strong>{item.title}</strong><small>{item.description}</small></span>
@@ -194,3 +203,4 @@ export default function DynamicQuiz({ language, visible }: { language: LanguageC
     </main>
   </div>;
 }
+
