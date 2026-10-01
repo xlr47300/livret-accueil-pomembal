@@ -41,9 +41,12 @@ import { uiExtrasByLanguage, type UiExtras } from "./content/ui";
 import Welcome from "./Welcome";
 import Booklet from "./Booklet";
 import DynamicQuiz from "./dynamic/DynamicQuiz";
+import CompanyBrand from "./CompanyBrand";
+import { companyQuizCopy } from "./dynamic/company";
+import type { Company } from "./dynamic/types";
 import { dynamicCopy } from "./dynamic/copy";
 
-type Screen = "dynamicQuiz" | "welcome" | "languages" | "portal" | "booklet" | "themes" | "theme" | "quiz" | "recap";
+type Screen = "tradipomQuiz" | "dynamicQuiz" | "welcome" | "languages" | "portal" | "booklet" | "themes" | "theme" | "quiz" | "recap";
 type ThemeProgress = { completed: ThemeId[]; inProgress: ThemeId[] };
 type QuizState = { questionIndex: number; selected: number | null; score: number };
 
@@ -76,16 +79,9 @@ const themeIcons: Record<ThemeId, typeof ShieldCheck> = {
 
 const reflexIcons = [HardHat, Hand, UtensilsCrossed, PackageCheck, SprayCan, CircleAlert, ShieldCheck, TriangleAlert];
 
-function Brand() {
-  return (
-    <div className="brand" aria-label="Pomembal">
-      <span className="brand-apple" aria-hidden="true"><i /></span>
-      <span>POMEMBAL</span>
-    </div>
-  );
-}
 
 function Header({
+  company = "POMEMBAL",
   onBack,
   onHome,
   onPortal,
@@ -94,6 +90,7 @@ function Header({
   languageSelected,
   language,
 }: {
+  company?: Company;
   onBack?: () => void;
   onHome?: () => void;
   onPortal?: () => void;
@@ -113,7 +110,7 @@ function Header({
             <ArrowLeft size={22} /><span style={{ fontSize: 13, fontWeight: 650 }}>{copy.header.back}</span>
           </button>
         ) : <div className="header-spacer" />}
-        <div className="header-center"><Brand />{onPortal && <button className="header-portal-link" onClick={onPortal}>{({ FR: "Mes modules", PL: "Moje moduły", PT: "Os meus módulos", AR: "وحداتي" } as Record<LanguageCode, string>)[language]}</button>}</div>
+        <div className="header-center"><CompanyBrand company={company} />{onPortal && <button className="header-portal-link" onClick={onPortal}>{({ FR: "Mes modules", PL: "Moje moduły", PT: "Os meus módulos", AR: "وحداتي" } as Record<LanguageCode, string>)[language]}</button>}</div>
         {onHome && <button className="icon-button header-home" onClick={onHome} aria-label={({ FR: "Accueil", PL: "Strona główna", PT: "Início", AR: "الرئيسية" } as Record<LanguageCode, string>)[language]} title={({ FR: "Accueil", PL: "Strona główna", PT: "Início", AR: "الرئيسية" } as Record<LanguageCode, string>)[language]}><HomeIcon size={20} /></button>}
         {languageSelected ? (
           <button className="language-chip" onClick={onLanguage} aria-label={copy.header.language}>{language}</button>
@@ -145,7 +142,7 @@ const portalCopy: Record<LanguageCode, {
   AR: { kicker: "مساحتك", title: "ماذا تريد أن تطّلع عليه؟", intro: "ستجد هنا المعلومات المفيدة لبدء عملك في محطة التعبئة.", booklet: "دليل الاستقبال", bookletText: "الشركة وجهات الاتصال وساعات العمل ومعلومات يومك الأول.", training: "التدريب على النظافة والسلامة", trainingText: "ثمانية مواضيع أساسية يتبعها اختبار.", open: "فتح", soon: "متاح قريبًا", future: "محتويات قادمة", futureText: "يمكن إضافة معلومات ودورات تدريبية أخرى هنا مستقبلًا." },
 };
 
-function Portal({ language, onBooklet, onTraining, onQuizzes }: { language: LanguageCode; onBooklet: () => void; onTraining: () => void; onQuizzes: () => void }) {
+function Portal({ language, onBooklet, onTraining, onQuizzes }: { language: LanguageCode; onBooklet: () => void; onTraining: () => void; onQuizzes: (company: Company) => void }) {
   const labels = portalCopy[language];
   return (
     <main id="main-content" tabIndex={-1} className="page-shell portal-shell">
@@ -167,11 +164,11 @@ function Portal({ language, onBooklet, onTraining, onQuizzes }: { language: Lang
           <span className="portal-card-copy"><strong>{labels.training}</strong><small>{labels.trainingText}</small></span>
           <span className="portal-card-action">{labels.open}<ChevronRight /></span>
         </button>
-        <button className="portal-card evaluations" onClick={onQuizzes}>
-          <span className="portal-card-icon"><GraduationCap /></span>
-          <span className="portal-card-copy"><strong>{dynamicCopy[language].title}</strong><small>{dynamicCopy[language].description}</small></span>
+        {(["POMEMBAL", "TRADIPOM"] as Company[]).map(company => <button key={company} className={`portal-card evaluations evaluations-${company.toLowerCase()}`} onClick={() => onQuizzes(company)}>
+          <CompanyBrand company={company} />
+          <span className="portal-card-copy"><strong>{dynamicCopy[language].title} {company === "POMEMBAL" ? "Pomembal" : "Tradipom"}</strong><small>{companyQuizCopy[language][company]}</small></span>
           <span className="portal-card-action">{labels.open}<ChevronRight /></span>
-        </button>
+        </button>)}
       </div>
     </main>
   );
@@ -470,6 +467,7 @@ export default function Home() {
   const [language, setLanguage] = useState<LanguageCode>("FR");
   const [activeThemeId, setActiveThemeId] = useState<ThemeId | null>(null);
   const [progress, setProgress] = useState<ThemeProgress>(emptyProgress);
+  const [quizReturn, setQuizReturn] = useState<"themes" | "dynamicQuiz">("themes");
   const [quiz, setQuiz] = useState<QuizState>(emptyQuiz);
   const [languageSelected, setLanguageSelected] = useState(false);
   const [languageReturn, setLanguageReturn] = useState<Screen | null>(null);
@@ -490,7 +488,7 @@ export default function Home() {
     window.history.replaceState({ ...window.history.state, pomembalNavigation: initial }, "");
     const restore = (event: PopStateEvent) => {
       const route = event.state?.pomembalNavigation;
-      const allowed: Screen[] = ["welcome", "languages", "portal", "booklet", "themes", "theme", "quiz", "recap", "dynamicQuiz"];
+      const allowed: Screen[] = ["welcome", "languages", "portal", "booklet", "themes", "theme", "quiz", "recap", "dynamicQuiz", "tradipomQuiz"];
       if (!route || !allowed.includes(route.screen)) return;
       clearCompletionTimer();
       const themeId: ThemeId | null = fr.themes.some(theme => theme.id === route.activeThemeId) ? route.activeThemeId : null;
@@ -552,7 +550,9 @@ export default function Home() {
   useEffect(() => {
     document.documentElement.lang = language.toLowerCase();
     document.documentElement.dir = content.direction;
-    document.title = screen === "booklet" ? `${portalCopy[language].booklet} · Pomembal`
+    document.title = screen === "tradipomQuiz" ? `${dynamicCopy[language].title} · Tradipom`
+      : screen === "dynamicQuiz" ? `${dynamicCopy[language].title} · Pomembal`
+      : screen === "booklet" ? `${portalCopy[language].booklet} · Pomembal`
       : screen === "themes" || screen === "theme" || screen === "quiz" || screen === "recap"
         ? `${copy.welcome.title} Pomembal`
         : "Accueil et formations Pomembal";
@@ -568,7 +568,7 @@ export default function Home() {
       pendingBookletSection.current = null;
       window.requestAnimationFrame(() => document.getElementById(sectionId)?.scrollIntoView({ block: "start" }));
     }
-    const main = document.querySelector<HTMLElement>("main");
+    const main = Array.from(document.querySelectorAll<HTMLElement>("main")).find(element => !element.closest("[hidden]"));
     if (main) { main.id = "main-content"; main.tabIndex = -1; main.focus({ preventScroll: true }); }
   }, [screen, activeThemeId]);
 
@@ -610,6 +610,7 @@ export default function Home() {
   };
 
   const startQuiz = () => {
+    setQuizReturn("themes");
     setQuiz(emptyQuiz);
     setScreen("quiz");
   };
@@ -667,7 +668,7 @@ export default function Home() {
       setScreen(languageReturn || "welcome");
       setLanguageReturn(null);
     } else if (screen === "portal") setScreen("languages");
-    else if (screen === "booklet" || screen === "themes" || screen === "dynamicQuiz") {
+    else if (screen === "booklet" || screen === "themes" || screen === "dynamicQuiz" || screen === "tradipomQuiz") {
       if (screen === "themes" && bookletReturnId) {
         pendingBookletSection.current = bookletReturnId;
         setBookletReturnId(null);
@@ -675,7 +676,9 @@ export default function Home() {
         setScreen("booklet");
       } else setScreen("portal");
     } else if (screen === "theme" || screen === "quiz" || screen === "recap") {
-      if (bookletReturnId) {
+      if ((screen === "quiz" || screen === "recap") && quizReturn === "dynamicQuiz") {
+        setScreen("dynamicQuiz");
+      } else if (bookletReturnId) {
         pendingBookletSection.current = bookletReturnId;
         setBookletReturnId(null);
         setActiveThemeId(null);
@@ -689,6 +692,7 @@ export default function Home() {
       <div className={`app-shell locale-${language.toLowerCase()}`} dir={content.direction} lang={language.toLowerCase()}>
         <a className="skip-link" href="#main-content">{({FR: "Aller au contenu", PL: "Przejdź do treści", PT: "Saltar para o conteúdo", AR: "انتقل إلى المحتوى"} as Record<LanguageCode,string>)[language]}</a>
         {screen !== "welcome" && <Header
+          company={screen === "tradipomQuiz" || (screen === "languages" && languageReturn === "tradipomQuiz") ? "TRADIPOM" : "POMEMBAL"}
           onBack={back}
           onHome={() => { clearCompletionTimer(); setLanguageReturn(null); setScreen(languageSelected ? "portal" : "welcome"); }}
           onPortal={languageSelected && screen !== "portal" ? () => { clearCompletionTimer(); setLanguageReturn(null); setScreen("portal"); } : undefined}
@@ -699,8 +703,9 @@ export default function Home() {
         />}
         {screen === "welcome" && <Welcome onStart={() => { setLanguageReturn(null); setScreen("languages"); }} />}
         {screen === "languages" && <LanguageChoice onSelect={selectLanguage} />}
-        {screen === "portal" && <Portal language={language} onBooklet={() => setScreen("booklet")} onTraining={() => setScreen("themes")} onQuizzes={() => setScreen("dynamicQuiz")} />}
-        <DynamicQuiz language={language} visible={screen === "dynamicQuiz"} />
+        {screen === "portal" && <Portal language={language} onBooklet={() => setScreen("booklet")} onTraining={() => setScreen("themes")} onQuizzes={company => setScreen(company === "TRADIPOM" ? "tradipomQuiz" : "dynamicQuiz")} />}
+        <DynamicQuiz company="POMEMBAL" language={language} visible={screen === "dynamicQuiz"} onHygieneQuiz={() => { setBookletReturnId(null); setQuizReturn("dynamicQuiz"); setQuiz(emptyQuiz); setScreen("quiz"); }} />
+        <DynamicQuiz company="TRADIPOM" language={language} visible={screen === "tradipomQuiz"} />
         {screen === "booklet" && <Booklet language={language} onTraining={() => { setBookletReturnId("idees"); setScreen("themes"); }} onTheme={openThemeFromBooklet} />}
         {screen === "themes" && <Themes progress={progress} onOpen={openTheme} onQuiz={startQuiz} />}
         {screen === "theme" && activeTheme && (
@@ -720,4 +725,5 @@ export default function Home() {
     </LocaleContext.Provider>
   );
 }
+
 

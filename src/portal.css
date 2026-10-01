@@ -238,3 +238,18 @@ main:focus { outline: none; }
   .handbook-team img { max-height: 230px; object-fit: contain; }
   .handbook-ideas { margin: 20px 0; padding: 20px; }
 }
+
+/* Quiz spaces: one company identity per section. */
+.portal-card.evaluations { min-height: 230px; }
+.portal-card.evaluations .company-brand { margin-bottom: 28px; }
+.company-brand { display: inline-flex; align-items: center; gap: 10px; }
+.brand-house { width: 30px; height: 30px; color: #536d45; stroke-width: 1.8; }
+.evaluations-tradipom { background: #f1f4ec; }
+.company-quiz-heading .company-brand { margin-bottom: 20px; }
+.company-quiz-heading h1 { margin-top: 0; }
+.hygiene-quiz-entry { margin-bottom: 24px; }
+@media (max-width: 600px) {
+  .portal-card.evaluations { min-height: 200px; }
+  .portal-card.evaluations .company-brand { margin-bottom: 22px; }
+  .header-center .brand-house { width: 21px; height: 21px; }
+}
