@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, ChevronRight, GraduationCap } from 'lucide-react';
+import { CheckCircle2, ChevronRight, GraduationCap, ClipboardCheck } from 'lucide-react';
 import type { LanguageCode } from '../content';
 import { dynamicCopy } from './copy';
 import { getQuiz, listQuizzes, submitAttempt } from './api';
@@ -144,13 +144,25 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
     setStage('list'); setQuiz(null); setCurrent(null); setResult(null); setError(null); setSaved(false);
   }
   const q = quiz?.questions[index];
+  const hub = ({
+    FR: { title: 'Formations et évaluations Tradipom', learn: 'Se former', assess: 'Évaluer ses connaissances', intro: 'Consultez les supports de formation, puis vérifiez vos connaissances avec les quiz.', quiz: 'Commencer le quiz', note: 'Les résultats des quiz sont enregistrés pour le suivi de formation.' },
+    PL: { title: 'Szkolenia i oceny Tradipom', learn: 'Szkolenia', assess: 'Sprawdź swoją wiedzę', intro: 'Zapoznaj się z materiałami szkoleniowymi, a następnie sprawdź swoją wiedzę w quizach.', quiz: 'Rozpocznij quiz', note: 'Wyniki quizów są zapisywane do monitorowania szkoleń.' },
+    PT: { title: 'Formações e avaliações Tradipom', learn: 'Aprender', assess: 'Avaliar os conhecimentos', intro: 'Consulte os materiais de formação e depois verifique os seus conhecimentos com os questionários.', quiz: 'Começar o questionário', note: 'Os resultados são guardados para acompanhamento da formação.' },
+    AR: { title: 'تدريبات وتقييمات Tradipom', learn: 'التعلّم', assess: 'تقييم المعرفة', intro: 'اطّلع على مواد التدريب ثم اختبر معرفتك بالاختبارات.', quiz: 'بدء الاختبار', note: 'تُحفظ نتائج الاختبارات لمتابعة التدريب.' },
+  })[language];
+  const quizCards = <div className="dynamic-list">{list.map(item => <button className="portal-card training" key={item.id} onClick={() => void select(item)}>
+    <span className="portal-card-icon">{company === 'TRADIPOM' ? <ClipboardCheck /> : <GraduationCap />}</span>
+    <span className="portal-card-copy"><strong>{item.title}</strong><small>{item.description}</small></span>
+    <span className="portal-card-action">{company === 'TRADIPOM' ? hub.quiz : labels.start}<ChevronRight /></span>
+  </button>)}</div>;
+
   return <div hidden={!visible}>
-    <main className="quiz-shell dynamic-quiz" aria-busy={busy || saving}>
-      {company === 'TRADIPOM' && onTraining && (stage === 'list' || quiz?.id === 'HACCP_TRADIPOM') && <div className="tradipom-training-link" lang="fr" dir="ltr">
-        <button className="secondary-button" onClick={onTraining}><GraduationCap size={20} /> {stage === 'list' ? 'Formation HACCP · 10 à 15 min · Français' : 'Consulter la formation HACCP'}</button>
+    <main className={`quiz-shell dynamic-quiz ${company === 'TRADIPOM' && stage === 'list' ? 'tradipom-hub' : ''}`} aria-busy={busy || saving}>
+      {company === 'TRADIPOM' && onTraining && stage !== 'list' && quiz?.id === 'HACCP_TRADIPOM' && <div className="tradipom-training-link" lang="fr" dir="ltr">
+        <button className="secondary-button" onClick={onTraining}><GraduationCap size={20} /> Consulter la formation HACCP</button>
       </div>}
       {stage === 'list' && <>
-        <div className="section-heading company-quiz-heading">{company && <CompanyBrand company={company} />}<h1>{labels.title}{company ? ` ${company === 'POMEMBAL' ? 'Pomembal' : 'Tradipom'}` : ''}</h1><p>{company ? sectionCopy[company] : labels.description}</p></div>
+        <div className="section-heading company-quiz-heading">{company && <CompanyBrand company={company} />}<h1>{company === 'TRADIPOM' ? hub.title : `${labels.title}${company ? ' Pomembal' : ''}`}</h1><p>{company === 'TRADIPOM' ? hub.intro : company ? sectionCopy[company] : labels.description}</p></div>
         {company === 'POMEMBAL' && onHygieneQuiz && <div className="dynamic-list hygiene-quiz-entry"><button className="portal-card training" onClick={onHygieneQuiz}>
           <span className="portal-card-icon"><GraduationCap /></span>
           <span className="portal-card-copy"><strong>{sectionCopy.hygieneTitle}</strong><small>{sectionCopy.hygieneText}</small></span>
@@ -163,14 +175,25 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
             <button className="secondary-button" disabled={saving} onClick={() => void send(item)}>{labels.retry}</button>
           </div>)}
         </section>}
-        {!busy && !error && list.length === 0 && !(company === 'POMEMBAL' && onHygieneQuiz) && <p role="status">{labels.empty}</p>}
-        {!busy && !error && <div className="dynamic-list">{list.map(item => <button className="portal-card training" key={item.id} onClick={() => void select(item)}>
-          <span className="portal-card-icon"><GraduationCap /></span>
-          <span className="portal-card-copy"><strong>{item.title}</strong><small>{item.description}</small></span>
-          <span className="portal-card-action">{labels.start}<ChevronRight /></span>
-        </button>)}</div>}
+        {company === 'TRADIPOM' ? <div className="tradipom-hub-columns">
+          <section className="tradipom-learn" aria-labelledby="tradipom-learn-title">
+            <h2 id="tradipom-learn-title"><GraduationCap /> {hub.learn}</h2>
+            <button className="tradipom-formation-card" onClick={onTraining} lang="fr" dir="ltr">
+              <img src="/images/tradipom-haccp-infographie.webp" alt="Aperçu de l’infographie HACCP Tradipom" />
+              <span className="tradipom-formation-copy"><span className="tradipom-formation-meta">10 à 15 min · Français · Consultation libre</span><strong>Formation HACCP</strong><span>Comprendre les dangers, maîtriser les risques et adopter les bons réflexes dans l’activité de Tradipom.</span><span className="tradipom-formation-action">Consulter la formation <ChevronRight /></span></span>
+            </button>
+          </section>
+          <section className="tradipom-assess" aria-labelledby="tradipom-assess-title">
+            <h2 id="tradipom-assess-title"><ClipboardCheck /> {hub.assess}</h2><p className="tradipom-assess-note">{hub.note}</p>
+            {busy && <p role="status">{labels.loading}</p>}
+            {!busy && !error && (list.length ? quizCards : <p role="status">{labels.empty}</p>)}
+          </section>
+        </div> : <>
+          {!busy && !error && list.length === 0 && !(company === 'POMEMBAL' && onHygieneQuiz) && <p role="status">{labels.empty}</p>}
+          {!busy && !error && quizCards}
+        </>}
       </>}
-      {busy && <p role="status">{labels.loading}</p>}
+      {busy && !(company === 'TRADIPOM' && stage === 'list') && <p role="status">{labels.loading}</p>}
       {error && <div className="feedback learn" role="alert">
         <div><p>{error === 'local' ? labels.localError : error === 'save' ? labels.failed : labels.error}</p>
           {error === 'load' && <button className="text-button" onClick={() => { setStage('list'); setQuiz(null); setReload(n => n + 1); }}>{labels.back}</button>}
