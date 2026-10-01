@@ -41,12 +41,13 @@ import { uiExtrasByLanguage, type UiExtras } from "./content/ui";
 import Welcome from "./Welcome";
 import Booklet from "./Booklet";
 import DynamicQuiz from "./dynamic/DynamicQuiz";
+import HaccpTraining from "./tradipom/HaccpTraining";
 import CompanyBrand from "./CompanyBrand";
 import { companyQuizCopy } from "./dynamic/company";
 import type { Company } from "./dynamic/types";
 import { dynamicCopy } from "./dynamic/copy";
 
-type Screen = "tradipomQuiz" | "dynamicQuiz" | "welcome" | "languages" | "portal" | "booklet" | "themes" | "theme" | "quiz" | "recap";
+type Screen = "tradipomTraining" | "tradipomQuiz" | "dynamicQuiz" | "welcome" | "languages" | "portal" | "booklet" | "themes" | "theme" | "quiz" | "recap";
 type ThemeProgress = { completed: ThemeId[]; inProgress: ThemeId[] };
 type QuizState = { questionIndex: number; selected: number | null; score: number };
 
@@ -118,6 +119,7 @@ function Header({
       </div>
       <div
         className="progress-line"
+        hidden={company === "TRADIPOM"}
         role="progressbar"
         aria-label={copy.header.progress}
         aria-valuemin={0}
@@ -467,6 +469,7 @@ export default function Home() {
   const [language, setLanguage] = useState<LanguageCode>("FR");
   const [activeThemeId, setActiveThemeId] = useState<ThemeId | null>(null);
   const [progress, setProgress] = useState<ThemeProgress>(emptyProgress);
+  const [haccpRequest, setHaccpRequest] = useState(0);
   const [quizReturn, setQuizReturn] = useState<"themes" | "dynamicQuiz">("themes");
   const [quiz, setQuiz] = useState<QuizState>(emptyQuiz);
   const [languageSelected, setLanguageSelected] = useState(false);
@@ -488,7 +491,7 @@ export default function Home() {
     window.history.replaceState({ ...window.history.state, pomembalNavigation: initial }, "");
     const restore = (event: PopStateEvent) => {
       const route = event.state?.pomembalNavigation;
-      const allowed: Screen[] = ["welcome", "languages", "portal", "booklet", "themes", "theme", "quiz", "recap", "dynamicQuiz", "tradipomQuiz"];
+      const allowed: Screen[] = ["welcome", "languages", "portal", "booklet", "themes", "theme", "quiz", "recap", "dynamicQuiz", "tradipomQuiz", "tradipomTraining"];
       if (!route || !allowed.includes(route.screen)) return;
       clearCompletionTimer();
       const themeId: ThemeId | null = fr.themes.some(theme => theme.id === route.activeThemeId) ? route.activeThemeId : null;
@@ -550,7 +553,7 @@ export default function Home() {
   useEffect(() => {
     document.documentElement.lang = language.toLowerCase();
     document.documentElement.dir = content.direction;
-    document.title = screen === "tradipomQuiz" ? `${dynamicCopy[language].title} · Tradipom`
+    document.title = (screen === "tradipomQuiz" || screen === "tradipomTraining") ? `${dynamicCopy[language].title} · Tradipom`
       : screen === "dynamicQuiz" ? `${dynamicCopy[language].title} · Pomembal`
       : screen === "booklet" ? `${portalCopy[language].booklet} · Pomembal`
       : screen === "themes" || screen === "theme" || screen === "quiz" || screen === "recap"
@@ -668,7 +671,7 @@ export default function Home() {
       setScreen(languageReturn || "welcome");
       setLanguageReturn(null);
     } else if (screen === "portal") setScreen("languages");
-    else if (screen === "booklet" || screen === "themes" || screen === "dynamicQuiz" || screen === "tradipomQuiz") {
+    else if (screen === "booklet" || screen === "themes" || screen === "dynamicQuiz" || screen === "tradipomQuiz" || screen === "tradipomTraining") {
       if (screen === "themes" && bookletReturnId) {
         pendingBookletSection.current = bookletReturnId;
         setBookletReturnId(null);
@@ -692,7 +695,7 @@ export default function Home() {
       <div className={`app-shell locale-${language.toLowerCase()}`} dir={content.direction} lang={language.toLowerCase()}>
         <a className="skip-link" href="#main-content">{({FR: "Aller au contenu", PL: "Przejdź do treści", PT: "Saltar para o conteúdo", AR: "انتقل إلى المحتوى"} as Record<LanguageCode,string>)[language]}</a>
         {screen !== "welcome" && <Header
-          company={screen === "tradipomQuiz" || (screen === "languages" && languageReturn === "tradipomQuiz") ? "TRADIPOM" : "POMEMBAL"}
+          company={screen === "tradipomTraining" || screen === "tradipomQuiz" || (screen === "languages" && languageReturn === "tradipomQuiz") ? "TRADIPOM" : "POMEMBAL"}
           onBack={back}
           onHome={() => { clearCompletionTimer(); setLanguageReturn(null); setScreen(languageSelected ? "portal" : "welcome"); }}
           onPortal={languageSelected && screen !== "portal" ? () => { clearCompletionTimer(); setLanguageReturn(null); setScreen("portal"); } : undefined}
@@ -705,7 +708,8 @@ export default function Home() {
         {screen === "languages" && <LanguageChoice onSelect={selectLanguage} />}
         {screen === "portal" && <Portal language={language} onBooklet={() => setScreen("booklet")} onTraining={() => setScreen("themes")} onQuizzes={company => setScreen(company === "TRADIPOM" ? "tradipomQuiz" : "dynamicQuiz")} />}
         <DynamicQuiz company="POMEMBAL" language={language} visible={screen === "dynamicQuiz"} onHygieneQuiz={() => { setBookletReturnId(null); setQuizReturn("dynamicQuiz"); setQuiz(emptyQuiz); setScreen("quiz"); }} />
-        <DynamicQuiz company="TRADIPOM" language={language} visible={screen === "tradipomQuiz"} />
+        <DynamicQuiz company="TRADIPOM" language={language} visible={screen === "tradipomQuiz"} onTraining={() => setScreen("tradipomTraining")} haccpRequest={haccpRequest} />
+        <HaccpTraining language={language} visible={screen === "tradipomTraining"} onQuizzes={() => setScreen("tradipomQuiz")} onQuiz={() => { setHaccpRequest(n => n + 1); setScreen("tradipomQuiz"); }} />
         {screen === "booklet" && <Booklet language={language} onTraining={() => { setBookletReturnId("idees"); setScreen("themes"); }} onTheme={openThemeFromBooklet} />}
         {screen === "themes" && <Themes progress={progress} onOpen={openTheme} onQuiz={startQuiz} />}
         {screen === "theme" && activeTheme && (

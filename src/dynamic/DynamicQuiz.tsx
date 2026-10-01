@@ -8,7 +8,7 @@ import CompanyBrand from '../CompanyBrand';
 import { companyQuizCopy, quizCompany } from './company';
 import type { Company, Letter, Pending, Questionnaire, QuizSummary, Result } from './types';
 
-export default function DynamicQuiz({ language, visible, company, onHygieneQuiz }: { language: LanguageCode; visible: boolean; company?: Company; onHygieneQuiz?: () => void }) {
+export default function DynamicQuiz({ language, visible, company, onHygieneQuiz, onTraining, haccpRequest = 0 }: { language: LanguageCode; visible: boolean; company?: Company; onHygieneQuiz?: () => void; onTraining?: () => void; haccpRequest?: number }) {
   const labels = dynamicCopy[language];
   const sectionCopy = companyQuizCopy[language];
   const [list, setList] = useState<QuizSummary[]>([]);
@@ -32,6 +32,7 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz 
   const attempt = useRef(1);
   const sessionId = useRef('');
   const lastLanguage = useRef(language);
+  const consumedRequest = useRef(0);
   const effectiveLabels = labels;
 
   const refreshPending = () => {
@@ -81,6 +82,22 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz 
     } catch { if (generation === loadId.current) setError('load'); }
     finally { if (generation === loadId.current) setBusy(false); }
   }
+  useEffect(() => {
+    if (!visible || !haccpRequest || consumedRequest.current === haccpRequest) return;
+    consumedRequest.current = haccpRequest;
+    if (quiz?.id === 'HACCP_TRADIPOM') return;
+    const generation = ++loadId.current;
+    setBusy(true); setError(null);
+    listQuizzes(language).then(items => {
+      if (generation !== loadId.current) return;
+      const target = items.find(item => item.id === 'HACCP_TRADIPOM' && item.type === 'QCM');
+      if (!target) { setError('load'); setBusy(false); return; }
+      void select(target);
+    }).catch(() => { if (generation === loadId.current) { setError('load'); setBusy(false); } });
+  // A new request selects once; revisiting the training keeps the current attempt.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, haccpRequest]);
+
   function start() {
     if (!quiz || running.current) return;
     try {
@@ -129,6 +146,9 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz 
   const q = quiz?.questions[index];
   return <div hidden={!visible}>
     <main className="quiz-shell dynamic-quiz" aria-busy={busy || saving}>
+      {company === 'TRADIPOM' && onTraining && (stage === 'list' || quiz?.id === 'HACCP_TRADIPOM') && <div className="tradipom-training-link" lang="fr" dir="ltr">
+        <button className="secondary-button" onClick={onTraining}><GraduationCap size={20} /> {stage === 'list' ? 'Formation HACCP · 10 à 15 min · Français' : 'Consulter la formation HACCP'}</button>
+      </div>}
       {stage === 'list' && <>
         <div className="section-heading company-quiz-heading">{company && <CompanyBrand company={company} />}<h1>{labels.title}{company ? ` ${company === 'POMEMBAL' ? 'Pomembal' : 'Tradipom'}` : ''}</h1><p>{company ? sectionCopy[company] : labels.description}</p></div>
         {company === 'POMEMBAL' && onHygieneQuiz && <div className="dynamic-list hygiene-quiz-entry"><button className="portal-card training" onClick={onHygieneQuiz}>
