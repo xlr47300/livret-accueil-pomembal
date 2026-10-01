@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { CheckCircle2, ChevronRight, GraduationCap, ClipboardCheck } from 'lucide-react';
+import { CheckCircle2, ChevronRight, GraduationCap, ClipboardCheck, Route, PackageSearch } from 'lucide-react';
 import type { LanguageCode } from '../content';
 import { dynamicCopy } from './copy';
 import { getQuiz, listQuizzes, submitAttempt } from './api';
@@ -8,7 +8,7 @@ import CompanyBrand from '../CompanyBrand';
 import { companyQuizCopy, quizCompany } from './company';
 import type { Company, Letter, Pending, Questionnaire, QuizSummary, Result } from './types';
 
-export default function DynamicQuiz({ language, visible, company, onHygieneQuiz, onTraining, haccpRequest = 0 }: { language: LanguageCode; visible: boolean; company?: Company; onHygieneQuiz?: () => void; onTraining?: () => void; haccpRequest?: number }) {
+export default function DynamicQuiz({ language, visible, company, onHygieneQuiz, onTraining, haccpRequest = 0, traceRequest = 0 }: { language: LanguageCode; visible: boolean; company?: Company; onHygieneQuiz?: () => void; onTraining?: (quizId?: string) => void; haccpRequest?: number; traceRequest?: number }) {
   const labels = dynamicCopy[language];
   const sectionCopy = companyQuizCopy[language];
   const [list, setList] = useState<QuizSummary[]>([]);
@@ -33,6 +33,7 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
   const sessionId = useRef('');
   const lastLanguage = useRef(language);
   const consumedRequest = useRef(0);
+  const consumedTraceRequest = useRef(0);
   const effectiveLabels = labels;
 
   const refreshPending = () => {
@@ -83,20 +84,25 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
     finally { if (generation === loadId.current) setBusy(false); }
   }
   useEffect(() => {
-    if (!visible || !haccpRequest || consumedRequest.current === haccpRequest) return;
+    if (!visible) return;
+    const trace = traceRequest !== consumedTraceRequest.current;
+    const haccp = haccpRequest !== consumedRequest.current;
+    if (!trace && !haccp) return;
+    const targetId = trace ? 'TRACABILITE_TRADIPOM' : 'HACCP_TRADIPOM';
     consumedRequest.current = haccpRequest;
-    if (quiz?.id === 'HACCP_TRADIPOM') return;
+    consumedTraceRequest.current = traceRequest;
+    if (quiz?.id === targetId) return;
     const generation = ++loadId.current;
     setBusy(true); setError(null);
     listQuizzes(language).then(items => {
       if (generation !== loadId.current) return;
-      const target = items.find(item => item.id === 'HACCP_TRADIPOM' && item.type === 'QCM');
+      const target = items.find(item => item.id === targetId && item.type === 'QCM');
       if (!target) { setError('load'); setBusy(false); return; }
       void select(target);
     }).catch(() => { if (generation === loadId.current) { setError('load'); setBusy(false); } });
   // A new request selects once; revisiting the training keeps the current attempt.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, haccpRequest]);
+  }, [visible, haccpRequest, traceRequest]);
 
   function start() {
     if (!quiz || running.current) return;
@@ -152,14 +158,14 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
   })[language];
   const quizCards = <div className="dynamic-list">{list.map(item => <button className="portal-card training" key={item.id} onClick={() => void select(item)}>
     <span className="portal-card-icon">{company === 'TRADIPOM' ? <ClipboardCheck /> : <GraduationCap />}</span>
-    <span className="portal-card-copy"><strong>{item.title}</strong><small>{item.description}</small></span>
+    <span className="portal-card-copy">{company === 'TRADIPOM' && (item.id === 'HACCP_TRADIPOM' || item.id === 'TRACABILITE_TRADIPOM') && <span className="tradipom-module-tag">{item.id === 'HACCP_TRADIPOM' ? 'Module 01 · HACCP' : 'Module 02 · Traçabilité et alerte'}</span>}<strong>{item.title}</strong><small>{item.description}</small></span>
     <span className="portal-card-action">{company === 'TRADIPOM' ? hub.quiz : labels.start}<ChevronRight /></span>
   </button>)}</div>;
 
   return <div hidden={!visible}>
     <main className={`quiz-shell dynamic-quiz ${company === 'TRADIPOM' && stage === 'list' ? 'tradipom-hub' : ''}`} aria-busy={busy || saving}>
-      {company === 'TRADIPOM' && onTraining && stage !== 'list' && quiz?.id === 'HACCP_TRADIPOM' && <div className="tradipom-training-link" lang="fr" dir="ltr">
-        <button className="secondary-button" onClick={onTraining}><GraduationCap size={20} /> Consulter la formation HACCP</button>
+      {company === 'TRADIPOM' && onTraining && stage !== 'list' && (quiz?.id === 'HACCP_TRADIPOM' || quiz?.id === 'TRACABILITE_TRADIPOM') && <div className="tradipom-training-link" lang="fr" dir="ltr">
+        <button className="secondary-button" onClick={() => onTraining(quiz?.id)}><GraduationCap size={20} /> {quiz?.id === 'TRACABILITE_TRADIPOM' ? 'Consulter la formation Traçabilité et alerte' : 'Consulter la formation HACCP'}</button>
       </div>}
       {stage === 'list' && <>
         <div className="section-heading company-quiz-heading">{company && <CompanyBrand company={company} />}<h1>{company === 'TRADIPOM' ? hub.title : `${labels.title}${company ? ' Pomembal' : ''}`}</h1><p>{company === 'TRADIPOM' ? hub.intro : company ? sectionCopy[company] : labels.description}</p></div>
@@ -178,9 +184,13 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
         {company === 'TRADIPOM' ? <div className="tradipom-hub-columns">
           <section className="tradipom-learn" aria-labelledby="tradipom-learn-title">
             <h2 id="tradipom-learn-title"><GraduationCap /> {hub.learn}</h2>
-            <button className="tradipom-formation-card" onClick={onTraining} lang="fr" dir="ltr">
+            <button className="tradipom-formation-card" onClick={() => onTraining?.('HACCP_TRADIPOM')} lang="fr" dir="ltr">
               <img src="/images/tradipom-haccp-infographie.webp" alt="Aperçu de l’infographie HACCP Tradipom" />
-              <span className="tradipom-formation-copy"><span className="tradipom-formation-meta">10 à 15 min · Français · Consultation libre</span><strong>Formation HACCP</strong><span>Comprendre les dangers, maîtriser les risques et adopter les bons réflexes dans l’activité de Tradipom.</span><span className="tradipom-formation-action">Consulter la formation <ChevronRight /></span></span>
+              <span className="tradipom-formation-copy"><span className="tradipom-formation-meta">10 à 15 min · Français · Consultation libre</span><span className="tradipom-module-tag">Module 01 · HACCP</span><strong>Formation HACCP</strong><span>Comprendre les dangers, maîtriser les risques et adopter les bons réflexes dans l’activité de Tradipom.</span><span className="tradipom-formation-action">Consulter la formation <ChevronRight /></span></span>
+            </button>
+            <button className="tradipom-formation-card traceability-formation-card" onClick={() => onTraining?.('TRACABILITE_TRADIPOM')} lang="fr" dir="ltr">
+              <span className="traceability-card-visual" aria-hidden="true"><PackageSearch /><span>Fournisseur / station</span><Route /><span>Lot</span><Route /><span>Client</span></span>
+              <span className="tradipom-formation-copy"><span className="tradipom-formation-meta">10 à 15 min · Français · Consultation libre</span><span className="tradipom-module-tag">Module 02 · Traçabilité et alerte</span><strong>Sécurité des aliments — Traçabilité et gestion d’une alerte</strong><span>Retrouver un lot, identifier les clients concernés et réagir avec les bonnes personnes.</span><span className="tradipom-formation-action">Consulter la formation <ChevronRight /></span></span>
             </button>
           </section>
           <section className="tradipom-assess" aria-labelledby="tradipom-assess-title">
