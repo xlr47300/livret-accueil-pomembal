@@ -168,7 +168,7 @@ function Portal({ language, onBooklet, onTraining, onQuizzes }: { language: Lang
         </button>
         {(["POMEMBAL", "TRADIPOM"] as Company[]).map(company => <button key={company} className={`portal-card evaluations evaluations-${company.toLowerCase()}`} onClick={() => onQuizzes(company)}>
           <CompanyBrand company={company} />
-          <span className="portal-card-copy"><strong>{dynamicCopy[language].title} {company === "POMEMBAL" ? "Pomembal" : "Tradipom"}</strong><small>{companyQuizCopy[language][company]}</small></span>
+          <span className="portal-card-copy"><strong>{company === "TRADIPOM" ? ({ FR: "Formations et évaluations Tradipom", PL: "Szkolenia i oceny Tradipom", PT: "Formações e avaliações Tradipom", AR: "تدريبات وتقييمات Tradipom" })[language] : `${dynamicCopy[language].title} Pomembal`}</strong><small>{companyQuizCopy[language][company]}</small></span>
           <span className="portal-card-action">{labels.open}<ChevronRight /></span>
         </button>)}
       </div>
