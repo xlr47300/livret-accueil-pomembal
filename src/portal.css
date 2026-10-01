@@ -343,3 +343,20 @@ main:focus { outline: none; }
 .tradipom-formation-card:focus-visible { outline:3px solid #315d45; outline-offset:4px; }
 @media(max-width:850px) { .tradipom-hub-columns { grid-template-columns:1fr; gap:36px; }.tradipom-formation-card > img { height:240px; }.tradipom-formation-copy { padding:24px; } }
 @media(max-width:440px) { .tradipom-assess .portal-card { padding:20px; }.tradipom-formation-copy { padding:22px; }.tradipom-formation-copy > strong { font-size:27px; } }
+
+/* Module 02 : traçabilité et gestion d’une alerte. */
+.tradipom-learn .tradipom-formation-card + .tradipom-formation-card { margin-top:24px; }
+.tradipom-module-tag { display:block; font-size:13px; font-weight:750; line-height:1.5; color:#426349; margin-bottom:8px; }
+.traceability-formation-card { background:#eaf1f8; border-color:#d2dfeb; }
+.traceability-card-visual { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:14px; width:100%; min-height:180px; padding:28px; background:#dce8f1; color:#244962; font-size:16px; font-weight:650; }
+.traceability-card-visual > svg:first-child { width:64px; height:64px; flex-basis:100%; }
+.traceability-card-visual > svg:not(:first-child) { width:24px; height:24px; }
+.traceability-chain { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:16px; padding:0; list-style:none; margin:28px 0; }
+.traceability-chain li { background:#eaf1f8; border:1px solid #d2dfeb; border-radius:14px; padding:22px; display:flex; flex-direction:column; gap:12px; }
+.traceability-chain svg { width:32px; height:32px; color:#244962; }
+.traceability-chain strong { font-size:20px; }.traceability-chain span { font-size:16px; }
+.traceability-document,.traceability-scenario { display:flex; gap:18px; padding:24px; background:#eef3f8; border-radius:14px; margin:24px 0; }
+.traceability-document > svg,.traceability-scenario > svg { flex-shrink:0; width:32px; height:32px; color:#244962; }
+.traceability-document h3,.traceability-scenario h3 { margin-top:0; }
+.haccp-training .traceability-source { font-size:13px; line-height:1.6; color:#5c6b61; margin-top:24px; }
+@media(max-width:600px) { .traceability-chain { grid-template-columns:1fr; }.traceability-chain li { margin:0; }.traceability-card-visual { gap:10px; padding:24px 16px; font-size:14px; }.traceability-document,.traceability-scenario { padding:18px; gap:12px; } }
