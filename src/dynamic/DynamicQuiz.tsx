@@ -156,10 +156,16 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
     PT: { title: 'Formações e avaliações Tradipom', learn: 'Aprender', assess: 'Avaliar os conhecimentos', intro: 'Consulte os materiais de formação e depois verifique os seus conhecimentos com os questionários.', quiz: 'Começar o questionário', note: 'Os resultados são guardados para acompanhamento da formação.' },
     AR: { title: 'تدريبات وتقييمات Tradipom', learn: 'التعلّم', assess: 'تقييم المعرفة', intro: 'اطّلع على مواد التدريب ثم اختبر معرفتك بالاختبارات.', quiz: 'بدء الاختبار', note: 'تُحفظ نتائج الاختبارات لمتابعة التدريب.' },
   })[language];
-  const quizCards = <div className="dynamic-list">{list.map(item => <button className="portal-card training" key={item.id} onClick={() => void select(item)}>
-    <span className="portal-card-icon">{company === 'TRADIPOM' ? <ClipboardCheck /> : <GraduationCap />}</span>
-    <span className="portal-card-copy">{company === 'TRADIPOM' && (item.id === 'HACCP_TRADIPOM' || item.id === 'TRACABILITE_TRADIPOM') && <span className="tradipom-module-tag">{item.id === 'HACCP_TRADIPOM' ? 'Module 01 · HACCP' : 'Module 02 · Traçabilité et alerte'}</span>}<strong>{item.title}</strong><small>{item.description}</small></span>
-    <span className="portal-card-action">{company === 'TRADIPOM' ? hub.quiz : labels.start}<ChevronRight /></span>
+  const assessmentCopy = ({
+    FR: { badge: 'Résultat enregistré', start: 'Passer l’évaluation', practice: 'M’entraîner' },
+    PL: { badge: 'Wynik jest zapisywany', start: 'Rozpocznij ocenę', practice: 'Ćwicz' },
+    PT: { badge: 'Resultado guardado', start: 'Iniciar a avaliação', practice: 'Treinar' },
+    AR: { badge: 'تُحفظ النتيجة', start: 'بدء التقييم', practice: 'أتدرّب' },
+  })[language];
+  const quizCards = <div className="dynamic-list">{list.map(item => <button className={`portal-card training ${company === 'POMEMBAL' ? 'pomembal-assessment-card' : ''}`} key={item.id} onClick={() => void select(item)}>
+    <span className="portal-card-icon"><ClipboardCheck /></span>
+    <span className="portal-card-copy">{company === 'TRADIPOM' && (item.id === 'HACCP_TRADIPOM' || item.id === 'TRACABILITE_TRADIPOM') && <span className="tradipom-module-tag">{item.id === 'HACCP_TRADIPOM' ? 'Module 01 · HACCP' : 'Module 02 · Traçabilité et alerte'}</span>}{company === 'POMEMBAL' && <span className="pomembal-assessment-badge">{assessmentCopy.badge}</span>}<strong>{item.title}</strong><small>{item.description}</small></span>
+    <span className="portal-card-action">{company === 'TRADIPOM' ? hub.quiz : company === 'POMEMBAL' ? assessmentCopy.start : labels.start}<ChevronRight /></span>
   </button>)}</div>;
 
   return <div hidden={!visible}>
@@ -172,7 +178,7 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
         {company === 'POMEMBAL' && onHygieneQuiz && <div className="dynamic-list hygiene-quiz-entry"><button className="portal-card training" onClick={onHygieneQuiz}>
           <span className="portal-card-icon"><GraduationCap /></span>
           <span className="portal-card-copy"><strong>{sectionCopy.hygieneTitle}</strong><small>{sectionCopy.hygieneText}</small></span>
-          <span className="portal-card-action">{labels.start}<ChevronRight /></span>
+          <span className="portal-card-action">{assessmentCopy.practice}<ChevronRight /></span>
         </button></div>}
         {sectionPending.length > 0 && <section className="quiz-card pending-attempts">
           <h2>{labels.pending}</h2>
@@ -256,4 +262,5 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
     </main>
   </div>;
 }
+
 
