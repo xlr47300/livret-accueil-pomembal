@@ -47,8 +47,10 @@ import CompanyBrand from "./CompanyBrand";
 import { companyQuizCopy } from "./dynamic/company";
 import type { Company } from "./dynamic/types";
 import { dynamicCopy } from "./dynamic/copy";
+import PinkLady from "./pink-lady/PinkLady";
+import { pinkLadyCopy } from "./pink-lady/copy";
 
-type Screen = "tradipomTraceability" | "tradipomTraining" | "tradipomQuiz" | "dynamicQuiz" | "welcome" | "languages" | "portal" | "booklet" | "themes" | "theme" | "quiz" | "recap";
+type Screen = "pinkLady" | "tradipomTraceability" | "tradipomTraining" | "tradipomQuiz" | "dynamicQuiz" | "welcome" | "languages" | "portal" | "booklet" | "themes" | "theme" | "quiz" | "recap";
 type ThemeProgress = { completed: ThemeId[]; inProgress: ThemeId[] };
 type QuizState = { questionIndex: number; selected: number | null; score: number };
 
@@ -91,6 +93,7 @@ function Header({
   completedCount,
   languageSelected,
   language,
+  showProgress = true,
 }: {
   company?: Company;
   onBack?: () => void;
@@ -98,6 +101,7 @@ function Header({
   onPortal?: () => void;
   onLanguage?: () => void;
   completedCount: number;
+  showProgress?: boolean;
   languageSelected: boolean;
   language: LanguageCode;
 }) {
@@ -120,7 +124,7 @@ function Header({
       </div>
       <div
         className="progress-line"
-        hidden={company === "TRADIPOM"}
+        hidden={company === "TRADIPOM" || !showProgress}
         role="progressbar"
         aria-label={copy.header.progress}
         aria-valuemin={0}
@@ -145,7 +149,7 @@ const portalCopy: Record<LanguageCode, {
   AR: { kicker: "مساحتك", title: "ماذا تريد أن تطّلع عليه؟", intro: "ستجد هنا المعلومات المفيدة لبدء عملك في محطة التعبئة.", booklet: "دليل الاستقبال", bookletText: "الشركة وجهات الاتصال وساعات العمل ومعلومات يومك الأول.", training: "التدريب على النظافة والسلامة", trainingText: "ثمانية مواضيع أساسية يتبعها اختبار.", open: "فتح", soon: "متاح قريبًا", future: "محتويات قادمة", futureText: "يمكن إضافة معلومات ودورات تدريبية أخرى هنا مستقبلًا." },
 };
 
-function Portal({ language, onBooklet, onTraining, onQuizzes }: { language: LanguageCode; onBooklet: () => void; onTraining: () => void; onQuizzes: (company: Company) => void }) {
+function Portal({ language, onBooklet, onTraining, onQuizzes, onPinkLady }: { language: LanguageCode; onBooklet: () => void; onTraining: () => void; onQuizzes: (company: Company) => void; onPinkLady: () => void }) {
   const labels = portalCopy[language];
   return (
     <main id="main-content" tabIndex={-1} className="page-shell portal-shell">
@@ -165,6 +169,14 @@ function Portal({ language, onBooklet, onTraining, onQuizzes }: { language: Lang
           <img className="module-photo" src="/images/hero-station.webp" alt="" />
           <span className="portal-card-icon"><GraduationCap /></span>
           <span className="portal-card-copy"><strong>{labels.training}</strong><small>{labels.trainingText}</small></span>
+          <span className="portal-card-action">{labels.open}<ChevronRight /></span>
+        </button>
+        <button className="portal-card pink-card" onClick={onPinkLady}>
+          <img className="pink-card-photo" src="/images/pink-lady/carte-8.webp" alt="" />
+          <span className="pink-card-main">
+            <span className="portal-card-icon"><GraduationCap /></span>
+            <span className="portal-card-copy"><strong>{pinkLadyCopy[language].card}</strong><small>{pinkLadyCopy[language].subtitle}</small></span>
+          </span>
           <span className="portal-card-action">{labels.open}<ChevronRight /></span>
         </button>
         {(["POMEMBAL", "TRADIPOM"] as Company[]).map(company => <button key={company} className={`portal-card evaluations evaluations-${company.toLowerCase()}`} onClick={() => onQuizzes(company)}>
@@ -465,6 +477,7 @@ function Recap({ onReview, onThemes }: { onReview: () => void; onThemes: () => v
 
 export default function Home() {
   const [screen, setScreen] = useState<Screen>("welcome");
+  const [pinkStep, setPinkStep] = useState(0);
   const previousRoute = useRef("welcome|");
   const restoringRoute = useRef<string | null>(null);
   const [language, setLanguage] = useState<LanguageCode>("FR");
@@ -493,7 +506,7 @@ export default function Home() {
     window.history.replaceState({ ...window.history.state, pomembalNavigation: initial }, "");
     const restore = (event: PopStateEvent) => {
       const route = event.state?.pomembalNavigation;
-      const allowed: Screen[] = ["welcome", "languages", "portal", "booklet", "themes", "theme", "quiz", "recap", "dynamicQuiz", "tradipomQuiz", "tradipomTraining", "tradipomTraceability"];
+      const allowed: Screen[] = ["welcome", "languages", "portal", "booklet", "themes", "theme", "quiz", "recap", "dynamicQuiz", "pinkLady", "tradipomQuiz", "tradipomTraining", "tradipomTraceability"];
       if (!route || !allowed.includes(route.screen)) return;
       clearCompletionTimer();
       const themeId: ThemeId | null = fr.themes.some(theme => theme.id === route.activeThemeId) ? route.activeThemeId : null;
@@ -556,6 +569,7 @@ export default function Home() {
     document.documentElement.lang = language.toLowerCase();
     document.documentElement.dir = content.direction;
     document.title = (screen === "tradipomQuiz" || screen === "tradipomTraining" || screen === "tradipomTraceability") ? `${dynamicCopy[language].title} · Tradipom`
+      : screen === "pinkLady" ? pinkLadyCopy[language].title
       : screen === "dynamicQuiz" ? `${dynamicCopy[language].title} · Pomembal`
       : screen === "booklet" ? `${portalCopy[language].booklet} · Pomembal`
       : screen === "themes" || screen === "theme" || screen === "quiz" || screen === "recap"
@@ -674,7 +688,7 @@ export default function Home() {
       setLanguageReturn(null);
     } else if (screen === "portal") setScreen("languages");
     else if (screen === "tradipomTraceability" || screen === "tradipomTraining") setScreen("tradipomQuiz");
-    else if (screen === "booklet" || screen === "themes" || screen === "dynamicQuiz" || screen === "tradipomQuiz") {
+    else if (screen === "booklet" || screen === "themes" || screen === "dynamicQuiz" || screen === "pinkLady" || screen === "tradipomQuiz") {
       if (screen === "themes" && bookletReturnId) {
         pendingBookletSection.current = bookletReturnId;
         setBookletReturnId(null);
@@ -704,12 +718,14 @@ export default function Home() {
           onPortal={languageSelected && screen !== "portal" ? () => { clearCompletionTimer(); setLanguageReturn(null); setScreen("portal"); } : undefined}
           onLanguage={openLanguage}
           completedCount={progress.completed.length}
+          showProgress={screen !== "pinkLady"}
           languageSelected={languageSelected}
           language={language}
         />}
         {screen === "welcome" && <Welcome onStart={() => { setLanguageReturn(null); setScreen("languages"); }} />}
         {screen === "languages" && <LanguageChoice onSelect={selectLanguage} />}
-        {screen === "portal" && <Portal language={language} onBooklet={() => setScreen("booklet")} onTraining={() => setScreen("themes")} onQuizzes={company => setScreen(company === "TRADIPOM" ? "tradipomQuiz" : "dynamicQuiz")} />}
+        {screen === "portal" && <Portal language={language} onBooklet={() => setScreen("booklet")} onTraining={() => setScreen("themes")} onQuizzes={company => setScreen(company === "TRADIPOM" ? "tradipomQuiz" : "dynamicQuiz")} onPinkLady={() => { setPinkStep(0); setScreen("pinkLady"); }} />}
+        {screen === "pinkLady" && <PinkLady language={language} index={pinkStep} onStep={setPinkStep} onExit={() => setScreen("portal")} />}
         <DynamicQuiz company="POMEMBAL" language={language} visible={screen === "dynamicQuiz"} onHygieneQuiz={() => { setBookletReturnId(null); setQuizReturn("dynamicQuiz"); setQuiz(emptyQuiz); setScreen("quiz"); }} />
         <DynamicQuiz company="TRADIPOM" language={language} visible={screen === "tradipomQuiz"} onTraining={id => setScreen(id === "TRACABILITE_TRADIPOM" ? "tradipomTraceability" : "tradipomTraining")} haccpRequest={haccpRequest} traceRequest={traceRequest} />
         <TraceabilityTraining language={language} visible={screen === "tradipomTraceability"} onQuizzes={() => setScreen("tradipomQuiz")} onQuiz={() => { setTraceRequest(n => n + 1); setScreen("tradipomQuiz"); }} />
