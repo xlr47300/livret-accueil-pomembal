@@ -455,3 +455,45 @@ main:focus { outline: none; }
   .pink-card-main .portal-card-copy strong { font-size: 25px; }
   .pink-lesson-text { font-size: 16px; }
 }
+
+/* Pink Lady® : correctifs ergonomiques, strictement limites au module. */
+@media (min-width: 761px) {
+  .pink-photos:not(.pink-photos-pair) {
+    grid-template-columns: minmax(0, 520px);
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  /* Le bouton Retour conserve son libelle accessible, mais sans debordement visuel. */
+  .site-header-pink .header-back {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+  .site-header-pink .header-back span { display: none; }
+  .site-header-pink .header-inner {
+    grid-template-columns: 44px minmax(0, 1fr) 40px 40px;
+    gap: 6px;
+    padding-inline: 10px;
+  }
+  /* Sur telephone, les photos prennent la largeur disponible. */
+  .pink-photos,
+  .pink-photos-pair { grid-template-columns: minmax(0, 1fr); }
+  .pink-lesson-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .pink-lesson-actions button {
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+    padding-inline: 12px;
+  }
+  /* Espace reserve aux commandes basses du navigateur iOS. */
+  .page-shell.pink-lesson {
+    padding-bottom: calc(110px + env(safe-area-inset-bottom));
+  }
+}

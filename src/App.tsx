@@ -109,10 +109,10 @@ function Header({
   const themes = content.themes;
   const percentage = Math.round((completedCount / themes.length) * 100);
   return (
-    <header className="site-header">
+    <header className={`site-header${!showProgress ? " site-header-pink" : ""}`}>
       <div className="header-inner">
         {onBack ? (
-          <button className="icon-button" style={{ width: "auto", gap: 6, paddingInline: 10 }} onClick={onBack} aria-label={copy.header.back}>
+          <button className="icon-button header-back" style={showProgress ? { width: "auto", gap: 6, paddingInline: 10 } : undefined} onClick={onBack} aria-label={copy.header.back}>
             <ArrowLeft size={22} /><span style={{ fontSize: 13, fontWeight: 650 }}>{copy.header.back}</span>
           </button>
         ) : <div className="header-spacer" />}
