@@ -402,3 +402,42 @@ button.portal-card:not(.disabled):hover { transform: translateY(-3px); box-shado
 .welcome-cover-content h1 { font-size:clamp(36px,7vw,76px); line-height:1.08; margin:24px 0 36px; }
 .welcome-cover-content button { margin:auto; }
 .welcome-cover-content > span { display:block; margin-top:24px; font-size:15px; }
+
+/* Distinguish the unrecorded practice quiz from the official recorded quiz. */
+.practice-notice, .save-status-unconfirmed {
+  padding: 15px 18px;
+  border: 1px solid #e8b46c;
+  background: #fff5e6;
+  color: #75420c;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+.save-status-confirmed {
+  padding: 15px 18px;
+  border: 1px solid #a3d08c;
+  background: #eaf5e4;
+  color: #326421;
+  border-radius: 14px;
+  font-weight: 800;
+  line-height: 1.5;
+}
+.official-assessment-callout {
+  margin-top: 22px;
+  padding: 24px;
+  border: 2px solid var(--green);
+  border-radius: 22px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+.official-assessment-callout > div { display: flex; align-items: center; gap: 15px; }
+.official-assessment-callout span { display: flex; flex-direction: column; gap: 6px; }
+.official-assessment-callout small, .official-assessment-callout p { color: var(--muted); line-height: 1.5; }
+.official-assessment-callout > .primary-button { align-self: flex-start; }
+@media (max-width: 530px) {
+  .official-assessment-callout { padding: 18px; }
+  .official-assessment-callout > .primary-button { align-self: stretch; }
+}

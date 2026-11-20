@@ -8,7 +8,11 @@ import CompanyBrand from '../CompanyBrand';
 import { companyQuizCopy, quizCompany } from './company';
 import type { Company, Letter, Pending, Questionnaire, QuizSummary, Result } from './types';
 
-export default function DynamicQuiz({ language, visible, company, onHygieneQuiz, onTraining, haccpRequest = 0, traceRequest = 0 }: { language: LanguageCode; visible: boolean; company?: Company; onHygieneQuiz?: () => void; onTraining?: (quizId?: string) => void; haccpRequest?: number; traceRequest?: number }) {
+function submissionError(cause: unknown) {
+  return cause instanceof Error && cause.message === 'NETWORK' ? 'network' : 'save';
+}
+
+export default function DynamicQuiz({ language, visible, company, onHygieneQuiz, onTraining, onUnconfirmedChange, hygieneRequest = 0, haccpRequest = 0, traceRequest = 0 }: { language: LanguageCode; visible: boolean; company?: Company; onHygieneQuiz?: () => void; onTraining?: (quizId?: string) => void; onUnconfirmedChange?: (value: boolean) => void; hygieneRequest?: number; haccpRequest?: number; traceRequest?: number }) {
   const labels = dynamicCopy[language];
   const sectionCopy = companyQuizCopy[language];
   const [list, setList] = useState<QuizSummary[]>([]);
@@ -23,7 +27,7 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
   const [current, setCurrent] = useState<Pending | null>(null);
   const [busy, setBusy] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<'load' | 'local' | 'save' | null>(null);
+  const [error, setError] = useState<'load' | 'local' | 'save' | 'network' | null>(null);
   const [saved, setSaved] = useState(false);
   const [reload, setReload] = useState(0);
   const running = useRef(false);
@@ -34,7 +38,21 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
   const lastLanguage = useRef(language);
   const consumedRequest = useRef(0);
   const consumedTraceRequest = useRef(0);
+  const consumedHygieneRequest = useRef(0);
+  const previouslyVisible = useRef(false);
   const effectiveLabels = labels;
+
+  const unconfirmed = stage === 'result' && !saved && current !== null;
+  useEffect(() => {
+    onUnconfirmedChange?.(visible && unconfirmed);
+    return () => onUnconfirmedChange?.(false);
+  }, [visible, unconfirmed, onUnconfirmedChange]);
+  useEffect(() => {
+    if (!visible || !unconfirmed) return;
+    const warn = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    window.addEventListener('beforeunload', warn);
+    return () => window.removeEventListener('beforeunload', warn);
+  }, [visible, unconfirmed]);
 
   const refreshPending = () => {
     try { setPending(readPending()); } catch { setError('local'); }
@@ -85,13 +103,15 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
   }
   useEffect(() => {
     if (!visible) return;
+    const hygiene = hygieneRequest !== consumedHygieneRequest.current;
     const trace = traceRequest !== consumedTraceRequest.current;
     const haccp = haccpRequest !== consumedRequest.current;
-    if (!trace && !haccp) return;
-    const targetId = trace ? 'TRACABILITE_TRADIPOM' : 'HACCP_TRADIPOM';
+    if (!trace && !haccp && !hygiene) return;
+    const targetId = hygiene ? 'HYGIENE_SECURITE_POMEMBAL' : trace ? 'TRACABILITE_TRADIPOM' : 'HACCP_TRADIPOM';
     consumedRequest.current = haccpRequest;
     consumedTraceRequest.current = traceRequest;
-    if (quiz?.id === targetId) return;
+    consumedHygieneRequest.current = hygieneRequest;
+    if (quiz?.id === targetId && (!hygiene || unconfirmed)) return;
     const generation = ++loadId.current;
     setBusy(true); setError(null);
     listQuizzes(language).then(items => {
@@ -102,7 +122,7 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
     }).catch(() => { if (generation === loadId.current) { setError('load'); setBusy(false); } });
   // A new request selects once; revisiting the training keeps the current attempt.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, haccpRequest, traceRequest]);
+  }, [visible, hygieneRequest, haccpRequest, traceRequest]);
 
   function start() {
     if (!quiz || running.current) return;
@@ -118,14 +138,63 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
     running.current = true; setSaving(true); setError(null);
     try {
       const confirmed = await submitAttempt(item.payload);
-      // If removal fails the server has still saved it; a retry is idempotent.
-      removePending(item.payload.sessionId); refreshPending();
+      // Only the server response confirms that an attempt was recorded.
+      // A failed local clean-up must not turn that confirmation into a failure.
       if (current?.payload.sessionId === item.payload.sessionId || sessionId.current === item.payload.sessionId) {
         setResult(confirmed); setSaved(true);
       }
-    } catch { setError('save'); refreshPending(); }
+      try { removePending(item.payload.sessionId); refreshPending(); }
+      catch { setError('local'); }
+    } catch (cause) { setError(submissionError(cause)); refreshPending(); }
     finally { running.current = false; setSaving(false); }
   }
+
+  // Completed attempts are stored locally before sending. Retry them on the
+  // evaluations page and when connectivity returns, without recreating attempts.
+  useEffect(() => {
+    if (!visible || stage !== 'list') return;
+    let active = true;
+    const retryPending = async () => {
+      if (running.current || window.navigator.onLine === false) return;
+      let items: Pending[];
+      try { items = readPending().filter(item => !company || quizCompany(item.quiz) === company); }
+      catch { if (active) setError('local'); return; }
+      if (!items.length) return;
+      running.current = true; setSaving(true);
+      try {
+        for (const item of items) {
+          if (!active) break;
+          try {
+            await submitAttempt(item.payload);
+            removePending(item.payload.sessionId);
+          } catch (cause) {
+            if (active) setError(submissionError(cause));
+          }
+        }
+      } finally {
+        running.current = false;
+        setSaving(false);
+        refreshPending();
+      }
+    };
+    void retryPending();
+    window.addEventListener('online', retryPending);
+    return () => { active = false; window.removeEventListener('online', retryPending); };
+  }, [visible, stage, company]);
+
+  useEffect(() => {
+    const returning = visible && !previouslyVisible.current;
+    previouslyVisible.current = visible;
+    if (!visible || stage !== 'result' || !current || saved) return;
+    const retryCurrent = () => { if (!running.current) void send(current); };
+    // The initial submission is handled by complete(). Retry only on return
+    // or reconnection, to avoid a duplicate immediate POST.
+    if (returning) retryCurrent();
+    window.addEventListener('online', retryCurrent);
+    return () => window.removeEventListener('online', retryCurrent);
+  // Retry is deliberately triggered by connectivity or a return to the screen.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, stage, current, saved]);
   function complete() {
     if (!quiz || running.current || answers.some(a => !a)) return;
     let points = 0, max = 0, correct = 0;
@@ -147,9 +216,12 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
     void send(item);
   }
   function finish() {
+    if (stage === 'result' && !saved) return;
     setStage('list'); setQuiz(null); setCurrent(null); setResult(null); setError(null); setSaved(false);
   }
   const q = quiz?.questions[index];
+  const saveError = error === 'network' ? `${labels.failed} ${labels.networkError}` : labels.failed;
+  const hasSaveError = error === 'save' || error === 'network';
   const hub = ({
     FR: { title: 'Formations et évaluations Tradipom', learn: 'Se former', assess: 'Évaluer ses connaissances', intro: 'Consultez les supports de formation, puis vérifiez vos connaissances avec les quiz.', quiz: 'Commencer le quiz', note: 'Les résultats des quiz sont enregistrés pour le suivi de formation.' },
     PL: { title: 'Szkolenia i oceny Tradipom', learn: 'Szkolenia', assess: 'Sprawdź swoją wiedzę', intro: 'Zapoznaj się z materiałami szkoleniowymi, a następnie sprawdź swoją wiedzę w quizach.', quiz: 'Rozpocznij quiz', note: 'Wyniki quizów są zapisywane do monitorowania szkoleń.' },
@@ -157,10 +229,10 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
     AR: { title: 'تدريبات وتقييمات Tradipom', learn: 'التعلّم', assess: 'تقييم المعرفة', intro: 'اطّلع على مواد التدريب ثم اختبر معرفتك بالاختبارات.', quiz: 'بدء الاختبار', note: 'تُحفظ نتائج الاختبارات لمتابعة التدريب.' },
   })[language];
   const assessmentCopy = ({
-    FR: { badge: 'Résultat enregistré', start: 'Passer l’évaluation', practice: 'M’entraîner' },
-    PL: { badge: 'Wynik jest zapisywany', start: 'Rozpocznij ocenę', practice: 'Ćwicz' },
-    PT: { badge: 'Resultado guardado', start: 'Iniciar a avaliação', practice: 'Treinar' },
-    AR: { badge: 'تُحفظ النتيجة', start: 'بدء التقييم', practice: 'أتدرّب' },
+    FR: { badge: 'Évaluation avec enregistrement', start: 'Passer l’évaluation', practice: 'M’entraîner' },
+    PL: { badge: 'Ocena z rejestracją wyniku', start: 'Rozpocznij ocenę', practice: 'Ćwicz' },
+    PT: { badge: 'Avaliação com registo', start: 'Iniciar a avaliação', practice: 'Treinar' },
+    AR: { badge: 'تقييم مع تسجيل النتيجة', start: 'بدء التقييم', practice: 'أتدرّب' },
   })[language];
   const quizCards = <div className="dynamic-list">{list.map(item => <button className={`portal-card training ${company === 'POMEMBAL' ? 'pomembal-assessment-card' : ''}`} key={item.id} onClick={() => void select(item)}>
     <span className="portal-card-icon"><ClipboardCheck /></span>
@@ -202,16 +274,16 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
           <section className="tradipom-assess" aria-labelledby="tradipom-assess-title">
             <h2 id="tradipom-assess-title"><ClipboardCheck /> {hub.assess}</h2><p className="tradipom-assess-note">{hub.note}</p>
             {busy && <p role="status">{labels.loading}</p>}
-            {!busy && !error && (list.length ? quizCards : <p role="status">{labels.empty}</p>)}
+            {!busy && error !== 'load' && (list.length ? quizCards : <p role="status">{labels.empty}</p>)}
           </section>
         </div> : <>
-          {!busy && !error && list.length === 0 && !(company === 'POMEMBAL' && onHygieneQuiz) && <p role="status">{labels.empty}</p>}
-          {!busy && !error && quizCards}
+          {!busy && error !== 'load' && list.length === 0 && !(company === 'POMEMBAL' && onHygieneQuiz) && <p role="status">{labels.empty}</p>}
+          {!busy && error !== 'load' && quizCards}
         </>}
       </>}
       {busy && !(company === 'TRADIPOM' && stage === 'list') && <p role="status">{labels.loading}</p>}
-      {error && <div className="feedback learn" role="alert">
-        <div><p>{error === 'local' ? labels.localError : error === 'save' ? labels.failed : labels.error}</p>
+      {error && !(stage === 'result' && hasSaveError) && <div className="feedback learn" role="alert">
+        <div><p>{error === 'local' ? labels.localError : hasSaveError ? saveError : labels.error}</p>
           {error === 'load' && <button className="text-button" onClick={() => { setStage('list'); setQuiz(null); setReload(n => n + 1); }}>{labels.back}</button>}
         </div>
       </div>}
@@ -247,16 +319,16 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
         </section>
       </>}
       {stage === 'result' && result && quiz && <section className="quiz-card" dir={language === 'AR' ? 'rtl' : 'ltr'} lang={language.toLowerCase()}>
-        <div className="quiz-symbol"><CheckCircle2 /></div><h1>{quiz.title}</h1>
+        <div className="quiz-symbol">{saved ? <CheckCircle2 /> : <ClipboardCheck />}</div><h1>{quiz.title}</h1>
         <p className="dynamic-score">{new Intl.NumberFormat(quiz.language.toLowerCase(), { style:'percent', maximumFractionDigits:1 }).format(result.score)}</p>
-        <h2>{result.status === 'VALIDE' ? effectiveLabels.valid : effectiveLabels.review}</h2>
+        <h2>{saved ? (result.status === 'VALIDE' ? effectiveLabels.valid : effectiveLabels.review) : effectiveLabels.provisionalTitle}</h2>
         <p>{effectiveLabels.correct} : {result.correct} / {result.questions}</p>
         <p>{effectiveLabels.attempt} {result.attempt}</p>
-        <p role="status">{saving ? effectiveLabels.saving : saved ? effectiveLabels.saved : effectiveLabels.provisional}</p>
+        <p className={saved ? 'save-status-confirmed' : 'save-status-unconfirmed'} role="status" aria-live="polite">{saving ? effectiveLabels.saving : saved ? effectiveLabels.saved : hasSaveError ? saveError : effectiveLabels.provisional}</p>
         {!saved && !saving && current && <button className="secondary-button quiz-next" onClick={() => void send(current)}>{effectiveLabels.retry}</button>}
         <div className="dynamic-actions">
           <button className="primary-button" disabled={saving || !saved} onClick={start}>{effectiveLabels.restart}</button>
-          <button className="secondary-button" disabled={saving} onClick={finish}>{effectiveLabels.finish}</button>
+          <button className="secondary-button" disabled={saving || !saved} onClick={finish}>{effectiveLabels.finish}</button>
         </div>
       </section>}
     </main>

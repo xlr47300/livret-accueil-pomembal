@@ -8,9 +8,9 @@ export async function request<T>(params: Record<string, string> | Attempt): Prom
     headers: post ? { 'Content-Type': 'application/json' } : undefined,
     body: post ? JSON.stringify(params) : undefined,
     signal: AbortSignal.timeout(65000)
-  });
+  }).catch(() => { throw new Error('NETWORK'); });
   const body = await response.json();
-  if (!response.ok || !body.ok) throw new Error(body.error || 'NETWORK');
+  if (!response.ok || !body.ok) throw new Error(body.error || 'INVALID_RESPONSE');
   return body.data as T;
 }
 const lists = new Map<LanguageCode, { expires: number; promise: Promise<QuizSummary[]> }>();
@@ -24,4 +24,11 @@ export const listQuizzes = (language: LanguageCode) => {
   return promise;
 };
 export const getQuiz = (id: string, version: string, language: LanguageCode) => request<Questionnaire>({ action: 'getQuiz', quizId: id, version, language });
-export const submitAttempt = (attempt: Attempt) => request<Result>(attempt);
+export async function submitAttempt(attempt: Attempt): Promise<Result> {
+  const result = await request<Result>(attempt);
+  if (!result || result.sessionId !== attempt.sessionId ||
+      !Number.isFinite(result.score) || (result.status !== 'VALIDE' && result.status !== 'A_REVOIR')) {
+    throw new Error('INVALID_RESPONSE');
+  }
+  return result;
+}

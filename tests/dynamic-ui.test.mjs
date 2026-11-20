@@ -36,17 +36,18 @@ test('React : FR/PL/PT/AR, identification, RTL, retry persistant, nouvelle tenta
   const { default:React, act }=await import('react');
   const { createRoot }=await import('react-dom/client');
   const originalFetch=globalThis.fetch;
-  const posts=[];let fail=false;
+  const posts=[];let fail=false;let official=false;
   const titles={FR:'Démo française',PL:'Polski quiz',PT:'Questionário português',AR:'اختبار تجريبي'};
-  const quiz=language=>({id:'DEMO',version:'V1',type:'QCM',title:titles[language],description:'Description',language,
-    identification:language==='PL'?'PSEUDO':language==='AR'?'ANONYME':'NOM',scoreMin:0.8,token:'fixture.'+language,
-    questions:[{id:'Q1',order:1,text:titles[language]+' ?',answers:['Alpha','Bravo','Charlie','Delta'],correct:'B',points:1,explanation:'Explication'}]});
+  const quiz=language=>({id:'HYGIENE_SECURITE_POMEMBAL',version:'V1',type:'QCM',title:titles[language],description:'Description',language,
+    identification:official?'NOM':language==='PL'?'PSEUDO':language==='AR'?'ANONYME':'NOM',scoreMin:0.8,token:'fixture.'+language,
+    questions:Array.from({length:official?8:1},(_,i)=>({id:'Q'+(i+1),order:i+1,text:titles[language]+' ?',answers:['Alpha','Bravo','Charlie','Delta'],correct:'B',points:1,explanation:'Explication'}))});
   globalThis.fetch=async (input,options={})=>{
     if(options.method==='POST') {
       const p=JSON.parse(options.body);posts.push(p);
       if(fail) throw new Error('offline');
-      const correct=p.answers[0]==='B'?1:0;
-      return Response.json({ok:true,data:{sessionId:p.sessionId,score:correct,scoreMin:0.8,status:correct?'VALIDE':'A_REVOIR',correct,questions:1,points:correct,max:1,attempt:p.attempt}});
+      const correct=p.answers.filter(answer=>answer==='B').length;
+      const questions=p.answers.length, score=correct/questions;
+      return Response.json({ok:true,data:{sessionId:p.sessionId,score,scoreMin:0.8,status:score>=0.8?'VALIDE':'A_REVOIR',correct,questions,points:correct,max:questions,attempt:p.attempt}});
     }
     const url=new URL(input,'https://portal.example'),language=url.searchParams.get('language');
     const q=quiz(language);
@@ -83,11 +84,14 @@ test('React : FR/PL/PT/AR, identification, RTL, retry persistant, nouvelle tenta
     fail=true;await click(button(dynamicCopy.AR.submit));
     assert.equal(posts.length,1);assert.equal(posts[0].participant,'');
     assert.ok(localStorage.getItem('pomembal.quiz.pending.v1').includes(posts[0].sessionId));
+    assert.ok(document.body.textContent.includes(dynamicCopy.AR.provisionalTitle));
+    assert.equal(button(dynamicCopy.AR.finish).disabled, true, 'unfinished upload cannot be shown as completed');
     const first=posts[0].sessionId;
     // Reload/remount; completed attempt persists and can be retried in another UI language.
     await act(async()=>root.unmount());root=createRoot(document.getElementById('root'));
     await render('FR');assert.ok(document.querySelector('.pending-row'));
-    fail=false;await click(button(dynamicCopy.FR.retry));
+    fail=false;
+    await act(async()=>window.dispatchEvent(new window.Event('online')));await tick();
     assert.equal(posts.at(-1).sessionId,first);
     assert.equal(JSON.parse(localStorage.getItem('pomembal.quiz.pending.v1')).length,0);
     for(const language of ['FR','PL','PT','AR']) {
@@ -131,6 +135,29 @@ test('React : FR/PL/PT/AR, identification, RTL, retry persistant, nouvelle tenta
     assert.equal(document.querySelectorAll('.answers button').length,3);
     await click(document.querySelector('.answers button'));
     assert.ok(document.querySelector('.feedback'));
+    assert.ok(document.querySelector('.practice-notice'), 'practice quiz is explicitly non-recorded');
+    await click(document.querySelector('.header-back'));
+    await click(document.querySelector('.official-assessment-callout .primary-button'));
+    assert.ok(document.querySelector('.quiz-identification'), 'official training evaluation opens directly from training hub');
+    await act(async()=>root.unmount());root=createRoot(document.getElementById('root'));
+    official=true;
+    const participants={FR:'Jean Exemple',PL:'Łucja Żółć',PT:'João Gonçalves',AR:'ليلى أحمد'};
+    for(const language of ['FR','PL','PT','AR']) {
+      await render(language);await click('.dynamic-list button');
+      await fill(participants[language]);await click(button(dynamicCopy[language].start));
+      assert.equal(document.querySelector('[role=progressbar]').getAttribute('aria-valuemax'),'8');
+      for(let question=0;question<8;question++) {
+        assert.equal(document.querySelectorAll('.answers button').length,4);
+        await click(document.querySelectorAll('.answers button')[question===0?0:1]);
+        await click(button(question===7?dynamicCopy[language].submit:dynamicCopy[language].next));
+      }
+      assert.equal(posts.at(-1).participant,participants[language]);
+      assert.equal(posts.at(-1).token,'fixture.'+language);
+      assert.deepEqual(posts.at(-1).answers,['A','B','B','B','B','B','B','B']);
+      assert.ok(document.body.textContent.includes(dynamicCopy[language].valid));
+      assert.ok(document.body.textContent.includes(dynamicCopy[language].saved));
+      await click(button(dynamicCopy[language].finish));
+    }
   } finally {
     await act(async()=>root.unmount());dom.window.close();globalThis.fetch=originalFetch;
     for(const key of Object.keys(globals)) {if(globals[key]===undefined) delete globalThis[key];else globalThis[key]=globals[key];}
