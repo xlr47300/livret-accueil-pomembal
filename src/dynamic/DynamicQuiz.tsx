@@ -151,7 +151,7 @@ export default function DynamicQuiz({ language, visible, company, onHygieneQuiz,
     if (!visible || stage !== 'list') return;
     let active = true;
     const retryPending = async () => {
-      if (running.current || (typeof navigator !== 'undefined' && !navigator.onLine)) return;
+      if (running.current || window.navigator.onLine === false) return;
       let items: Pending[];
       try { items = readPending().filter(item => !company || quizCompany(item.quiz) === company); }
       catch { if (active) setError('local'); return; }
