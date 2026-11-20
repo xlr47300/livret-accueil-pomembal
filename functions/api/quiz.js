@@ -22,19 +22,23 @@ export async function onRequest({ request, env }) {
       if (origin && origin !== new URL(request.url).origin) return reply({ ok: false, error: 'ORIGIN' }, 403);
       body = await request.text();
       if (body.length > 250000) return reply({ ok: false, error: 'SIZE' }, 413);
-      const parsed = JSON.parse(body);
+      let parsed;
+      try { parsed = JSON.parse(body); }
+      catch { return reply({ ok: false, error: 'BODY' }, 400); }
+      if (!parsed || typeof parsed !== 'object') return reply({ ok: false, error: 'BODY' }, 400);
       if (parsed.action !== 'submitAttempt') return reply({ ok: false, error: 'ACTION' }, 400);
     }
     const upstream = await fetch(url.toString(), {
       method: request.method, redirect: 'follow',
       headers: body ? { 'Content-Type': 'text/plain;charset=utf-8' } : undefined,
       body, signal: AbortSignal.timeout(55000)
-    });
-    if (!upstream.ok) throw new Error('UPSTREAM');
+    }).catch(() => null);
+    if (!upstream) return reply({ ok: false, error: 'NETWORK' }, 502);
+    if (!upstream.ok) return reply({ ok: false, error: 'UPSTREAM' }, 502);
     const data = await upstream.json();
-    if (typeof data.ok !== 'boolean') throw new Error('INVALID_RESPONSE');
+    if (!data || typeof data.ok !== 'boolean') throw new Error('INVALID_RESPONSE');
     return reply(data, data.ok ? 200 : 400);
   } catch {
-    return reply({ ok: false, error: 'NETWORK' }, 502);
+    return reply({ ok: false, error: 'INVALID_RESPONSE' }, 502);
   }
 }

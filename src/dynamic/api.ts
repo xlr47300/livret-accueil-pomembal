@@ -8,9 +8,9 @@ export async function request<T>(params: Record<string, string> | Attempt): Prom
     headers: post ? { 'Content-Type': 'application/json' } : undefined,
     body: post ? JSON.stringify(params) : undefined,
     signal: AbortSignal.timeout(65000)
-  });
+  }).catch(() => { throw new Error('NETWORK'); });
   const body = await response.json();
-  if (!response.ok || !body.ok) throw new Error(body.error || 'NETWORK');
+  if (!response.ok || !body.ok) throw new Error(body.error || 'INVALID_RESPONSE');
   return body.data as T;
 }
 const lists = new Map<LanguageCode, { expires: number; promise: Promise<QuizSummary[]> }>();

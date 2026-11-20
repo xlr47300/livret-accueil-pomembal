@@ -125,10 +125,15 @@ test('proxy : GET et POST, redirects suivis et erreurs Google/connexion', async 
       });
       assert.equal((await onRequest({request,env})).status,200);
     }
+    const listRequest=()=>onRequest({request:new Request('https://example.com/api/quiz?action=listQuizzes'),env});
     globalThis.fetch=async () => new Response('<html>Connexion Google</html>');
-    assert.equal((await onRequest({request:new Request('https://example.com/api/quiz?action=listQuizzes'),env})).status,502);
+    const invalid=await listRequest();
+    assert.equal(invalid.status,502);
+    assert.equal((await invalid.json()).error,'INVALID_RESPONSE');
     globalThis.fetch=async () => {throw new Error('offline');};
-    assert.equal((await onRequest({request:new Request('https://example.com/api/quiz?action=listQuizzes'),env})).status,502);
+    const offline=await listRequest();
+    assert.equal(offline.status,502);
+    assert.equal((await offline.json()).error,'NETWORK');
   } finally {globalThis.fetch=original;}
 });
 
