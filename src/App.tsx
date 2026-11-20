@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   ChevronRight,
   CircleAlert,
+  ClipboardCheck,
   BookOpen,
   Building2,
   CalendarClock,
@@ -24,7 +25,7 @@ import {
   UtensilsCrossed,
   X,
 } from "lucide-react";
-import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import {
   contentByLanguage,
   copyByLanguage,
@@ -47,6 +48,7 @@ import CompanyBrand from "./CompanyBrand";
 import { companyQuizCopy } from "./dynamic/company";
 import type { Company } from "./dynamic/types";
 import { dynamicCopy } from "./dynamic/copy";
+import { assessmentPathCopy } from "./dynamic/assessmentCopy";
 import PinkLady from "./pink-lady/PinkLady";
 import { pinkLadyCopy } from "./pink-lady/copy";
 
@@ -225,12 +227,15 @@ function Themes({
   progress,
   onOpen,
   onQuiz,
+  onAssessment,
 }: {
   progress: ThemeProgress;
   onOpen: (id: ThemeId) => void;
   onQuiz: () => void;
+  onAssessment: () => void;
 }) {
   const { content, copy, extras } = useLocale();
+  const language = content.code;
   const themes = content.themes;
   return (
     <main className="page-shell">
@@ -267,8 +272,12 @@ function Themes({
         })}
       </div>
       <div className="quiz-invite">
-        <div><Sparkles /><span><strong>{copy.themes.quizTitle}</strong><small>{copy.themes.quizMeta}</small></span></div>
+        <div><Sparkles /><span><strong>{assessmentPathCopy[language].practiceLabel}</strong><small>{assessmentPathCopy[language].practiceNotice}</small></span></div>
         <button className="secondary-button" onClick={onQuiz}>{copy.themes.quizButton} <ArrowRight size={19} /></button>
+      </div>
+      <div className="official-assessment-callout">
+        <div><ClipboardCheck size={24} /><span><strong>{assessmentPathCopy[language].officialButton}</strong><small>{assessmentPathCopy[language].officialHint}</small></span></div>
+        <button className="primary-button" onClick={onAssessment}>{assessmentPathCopy[language].officialButton} <ArrowRight size={19} /></button>
       </div>
     </main>
   );
@@ -357,7 +366,7 @@ function ThemeDetail({
           <div className="completion-actions" role="status">
             <span className="completion-label"><CheckCircle2 /> {copy.theme.completed}</span>
             <button className="primary-button" onClick={onContinue}>
-              {nextTheme ? copy.theme.next : copy.theme.quiz} <ArrowRight size={20} />
+              {nextTheme ? copy.theme.next : assessmentPathCopy[content.code].officialButton} <ArrowRight size={20} />
             </button>
             <button className="text-button" onClick={onBackToThemes}>{copy.theme.backToThemes}</button>
           </div>
@@ -405,6 +414,7 @@ function Quiz({ quiz, setQuiz, onFinish }: { quiz: QuizState; setQuiz: React.Dis
         <span style={{ width: `${((questionIndex + 1) / content.quizQuestions.length) * 100}%` }} />
       </div>
       <section className="quiz-card">
+        <p className="practice-notice" role="status">{assessmentPathCopy[content.code].practiceNotice}</p>
         <div className="quiz-symbol"><ShieldCheck /></div>
         <p className="kicker plain">{copy.quiz.choose}</p>
         <h1>{question.question}</h1>
@@ -443,15 +453,15 @@ function Quiz({ quiz, setQuiz, onFinish }: { quiz: QuizState; setQuiz: React.Dis
   );
 }
 
-function Recap({ onReview, onThemes }: { onReview: () => void; onThemes: () => void }) {
+function Recap({ onReview, onThemes, onAssessment }: { onReview: () => void; onThemes: () => void; onAssessment: () => void }) {
   const { content, copy } = useLocale();
   return (
     <main className="recap-shell">
       <section className="success-panel">
         <span className="success-icon"><Check /></span>
         <p className="kicker">{copy.recap.kicker}</p>
-        <h1>{copy.recap.title}</h1>
-        <p>{copy.recap.subtitle}</p>
+        <h1>{assessmentPathCopy[content.code].practiceLabel}</h1>
+        <p>{assessmentPathCopy[content.code].practiceFinished}</p>
       </section>
       <section className="recap-content">
         <div className="section-heading centered">
@@ -466,8 +476,13 @@ function Recap({ onReview, onThemes }: { onReview: () => void; onThemes: () => v
         </ol>
         <blockquote>{copy.recap.motto}</blockquote>
         <div className="final-reminder"><CircleAlert /><p><strong>{copy.recap.doubt}</strong><br />{copy.recap.ask}</p></div>
+        <div className="official-assessment-callout">
+          <p className="practice-notice" role="status">{assessmentPathCopy[content.code].practiceFinished}</p>
+          <p>{assessmentPathCopy[content.code].officialHint}</p>
+          <button className="primary-button" onClick={onAssessment}><ClipboardCheck size={19} /> {assessmentPathCopy[content.code].officialButton}</button>
+        </div>
         <div className="recap-actions">
-          <button className="primary-button" onClick={onReview}><ArrowLeft size={19} /> {copy.recap.review}</button>
+          <button className="secondary-button" onClick={onReview}><ArrowLeft size={19} /> {copy.recap.review}</button>
           <button className="secondary-button" onClick={onThemes}>{copy.recap.themes}</button>
         </div>
       </section>
@@ -485,6 +500,11 @@ export default function Home() {
   const [progress, setProgress] = useState<ThemeProgress>(emptyProgress);
   const [traceRequest, setTraceRequest] = useState(0);
   const [haccpRequest, setHaccpRequest] = useState(0);
+  const [hygieneRequest, setHygieneRequest] = useState(0);
+  const unconfirmedAssessment = useRef({ POMEMBAL: false, TRADIPOM: false });
+  const currentScreen = useRef<Screen>("welcome");
+  const currentThemeId = useRef<ThemeId | null>(null);
+  const currentLanguage = useRef<LanguageCode>("FR");
   const [quizReturn, setQuizReturn] = useState<"themes" | "dynamicQuiz">("themes");
   const [quiz, setQuiz] = useState<QuizState>(emptyQuiz);
   const [languageSelected, setLanguageSelected] = useState(false);
@@ -498,6 +518,15 @@ export default function Home() {
   const copy = copyByLanguage[language];
   const extras = uiExtrasByLanguage[language];
   const themes = content.themes;
+  currentScreen.current = screen;
+  currentThemeId.current = activeThemeId;
+  currentLanguage.current = language;
+  const allowLeavingAssessment = () => {
+    const active = currentScreen.current === 'dynamicQuiz' ? 'POMEMBAL' : currentScreen.current === 'tradipomQuiz' ? 'TRADIPOM' : null;
+    return !active || !unconfirmedAssessment.current[active] || window.confirm(assessmentPathCopy[currentLanguage.current].leaveWarning);
+  };
+  const updateUnconfirmedPomembal = useCallback((value: boolean) => { unconfirmedAssessment.current.POMEMBAL = value; }, []);
+  const updateUnconfirmedTradipom = useCallback((value: boolean) => { unconfirmedAssessment.current.TRADIPOM = value; }, []);
 
   // Track screens so the browser Back/Forward buttons stay inside the app.
   // The selected language remains in React state and local storage.
@@ -505,6 +534,11 @@ export default function Home() {
     const initial = { screen: "welcome", activeThemeId: null };
     window.history.replaceState({ ...window.history.state, pomembalNavigation: initial }, "");
     const restore = (event: PopStateEvent) => {
+      if (!allowLeavingAssessment()) {
+        // Restore the current in-app history entry if navigation was refused.
+        window.history.pushState({ ...window.history.state, pomembalNavigation: { screen: currentScreen.current, activeThemeId: currentThemeId.current } }, '');
+        return;
+      }
       const route = event.state?.pomembalNavigation;
       const allowed: Screen[] = ["welcome", "languages", "portal", "booklet", "themes", "theme", "quiz", "recap", "dynamicQuiz", "pinkLady", "tradipomQuiz", "tradipomTraining", "tradipomTraceability"];
       if (!route || !allowed.includes(route.screen)) return;
@@ -634,6 +668,13 @@ export default function Home() {
     setScreen("quiz");
   };
 
+  const startRecordedHygieneAssessment = () => {
+    if (!allowLeavingAssessment()) return;
+    setBookletReturnId(null);
+    setHygieneRequest(n => n + 1);
+    setScreen('dynamicQuiz');
+  };
+
   const clearCompletionTimer = () => {
     if (completionTimer.current) {
       window.clearTimeout(completionTimer.current);
@@ -647,7 +688,7 @@ export default function Home() {
     const currentIndex = themes.findIndex((theme) => theme.id === themeId);
     const followingTheme = currentIndex >= 0 ? themes[currentIndex + 1] : undefined;
     if (!followingTheme) {
-      startQuiz();
+      startRecordedHygieneAssessment();
       return;
     }
     if (!followingTheme.available) {
@@ -682,6 +723,7 @@ export default function Home() {
   };
 
   const back = () => {
+    if (!allowLeavingAssessment()) return;
     clearCompletionTimer();
     if (screen === "languages") {
       setScreen(languageReturn || "welcome");
@@ -714,9 +756,9 @@ export default function Home() {
         {screen !== "welcome" && <Header
           company={screen === "tradipomTraceability" || screen === "tradipomTraining" || screen === "tradipomQuiz" || (screen === "languages" && (languageReturn === "tradipomQuiz" || languageReturn === "tradipomTraining" || languageReturn === "tradipomTraceability")) ? "TRADIPOM" : "POMEMBAL"}
           onBack={back}
-          onHome={() => { clearCompletionTimer(); setLanguageReturn(null); setScreen(languageSelected ? "portal" : "welcome"); }}
-          onPortal={languageSelected && screen !== "portal" ? () => { clearCompletionTimer(); setLanguageReturn(null); setScreen("portal"); } : undefined}
-          onLanguage={openLanguage}
+          onHome={() => { if (!allowLeavingAssessment()) return; clearCompletionTimer(); setLanguageReturn(null); setScreen(languageSelected ? "portal" : "welcome"); }}
+          onPortal={languageSelected && screen !== "portal" ? () => { if (!allowLeavingAssessment()) return; clearCompletionTimer(); setLanguageReturn(null); setScreen("portal"); } : undefined}
+          onLanguage={() => { if (allowLeavingAssessment()) openLanguage(); }}
           completedCount={progress.completed.length}
           showProgress={screen !== "pinkLady"}
           languageSelected={languageSelected}
@@ -726,12 +768,12 @@ export default function Home() {
         {screen === "languages" && <LanguageChoice onSelect={selectLanguage} />}
         {screen === "portal" && <Portal language={language} onBooklet={() => setScreen("booklet")} onTraining={() => setScreen("themes")} onQuizzes={company => setScreen(company === "TRADIPOM" ? "tradipomQuiz" : "dynamicQuiz")} onPinkLady={() => { setPinkStep(0); setScreen("pinkLady"); }} />}
         {screen === "pinkLady" && <PinkLady language={language} index={pinkStep} onStep={setPinkStep} onExit={() => setScreen("portal")} />}
-        <DynamicQuiz company="POMEMBAL" language={language} visible={screen === "dynamicQuiz"} onHygieneQuiz={() => { setBookletReturnId(null); setQuizReturn("dynamicQuiz"); setQuiz(emptyQuiz); setScreen("quiz"); }} />
-        <DynamicQuiz company="TRADIPOM" language={language} visible={screen === "tradipomQuiz"} onTraining={id => setScreen(id === "TRACABILITE_TRADIPOM" ? "tradipomTraceability" : "tradipomTraining")} haccpRequest={haccpRequest} traceRequest={traceRequest} />
+        <DynamicQuiz company="POMEMBAL" language={language} visible={screen === "dynamicQuiz"} hygieneRequest={hygieneRequest} onUnconfirmedChange={updateUnconfirmedPomembal} onHygieneQuiz={() => { setBookletReturnId(null); setQuizReturn("dynamicQuiz"); setQuiz(emptyQuiz); setScreen("quiz"); }} />
+        <DynamicQuiz company="TRADIPOM" language={language} visible={screen === "tradipomQuiz"} onUnconfirmedChange={updateUnconfirmedTradipom} onTraining={id => { if (allowLeavingAssessment()) setScreen(id === "TRACABILITE_TRADIPOM" ? "tradipomTraceability" : "tradipomTraining"); }} haccpRequest={haccpRequest} traceRequest={traceRequest} />
         <TraceabilityTraining language={language} visible={screen === "tradipomTraceability"} onQuizzes={() => setScreen("tradipomQuiz")} onQuiz={() => { setTraceRequest(n => n + 1); setScreen("tradipomQuiz"); }} />
         <HaccpTraining language={language} visible={screen === "tradipomTraining"} onQuizzes={() => setScreen("tradipomQuiz")} onQuiz={() => { setHaccpRequest(n => n + 1); setScreen("tradipomQuiz"); }} />
         {screen === "booklet" && <Booklet language={language} onTraining={() => { setBookletReturnId("idees"); setScreen("themes"); }} onTheme={openThemeFromBooklet} />}
-        {screen === "themes" && <Themes progress={progress} onOpen={openTheme} onQuiz={startQuiz} />}
+        {screen === "themes" && <Themes progress={progress} onOpen={openTheme} onQuiz={startQuiz} onAssessment={startRecordedHygieneAssessment} />}
         {screen === "theme" && activeTheme && (
           <ThemeDetail
             theme={activeTheme}
@@ -744,7 +786,7 @@ export default function Home() {
           />
         )}
         {screen === "quiz" && <Quiz quiz={quiz} setQuiz={setQuiz} onFinish={() => setScreen("recap")} />}
-        {screen === "recap" && <Recap onReview={() => openTheme("entree")} onThemes={() => setScreen("themes")} />}
+        {screen === "recap" && <Recap onReview={() => openTheme("entree")} onThemes={() => setScreen("themes")} onAssessment={startRecordedHygieneAssessment} />}
       </div>
     </LocaleContext.Provider>
   );

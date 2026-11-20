@@ -24,4 +24,11 @@ export const listQuizzes = (language: LanguageCode) => {
   return promise;
 };
 export const getQuiz = (id: string, version: string, language: LanguageCode) => request<Questionnaire>({ action: 'getQuiz', quizId: id, version, language });
-export const submitAttempt = (attempt: Attempt) => request<Result>(attempt);
+export async function submitAttempt(attempt: Attempt): Promise<Result> {
+  const result = await request<Result>(attempt);
+  if (!result || result.sessionId !== attempt.sessionId ||
+      !Number.isFinite(result.score) || (result.status !== 'VALIDE' && result.status !== 'A_REVOIR')) {
+    throw new Error('INVALID_RESPONSE');
+  }
+  return result;
+}
