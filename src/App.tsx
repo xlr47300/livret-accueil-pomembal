@@ -300,7 +300,7 @@ function ThemeDetail({
   onContinue: () => void;
   onBackToThemes: () => void;
 }) {
-  const { copy, extras } = useLocale();
+  const { content, copy, extras } = useLocale();
   return (
     <main className={`theme-detail theme-${theme.color}`}>
       <section className={`theme-hero ${theme.image ? "" : "solo"}`}>
